@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Student Complaint System</title>
+    <link rel="stylesheet" href="login_page_style.css"> 
+</head>
+<body>
+
+    <div class="login-card">
+        
+        <div class="logo-container">
+            <img src="https://www.iconpacks.net/icons/1/free-user-login-icon-305-thumb.png" alt="Login Icon" class="popup-logo" style="width: 100px; height: 100px;">
+        </div>
+
+        <h2>Log in to Complaint System</h2>
+
+        <form action="/handle_login" method="POST">
+            
+            <div class="input-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn login-btn submit-btn">Login</button>
+        </form>
+
+        <div class="form-footer">
+            <a href="#">Forgot Password?</a>
+            <p>Don't have an account? <a href="register_page.html">Register here</a>.</p>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+/* General reset and styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    
+    /* === Background Image Settings === */
+    /* I chose a slightly darker image so the text pops, but the overlay helps too */
+    background-image: url('https://upload.wikimedia.org/wikipedia/en/thumb/c/ce/Kathmandu_University_High_School.jpg/1280px-Kathmandu_University_High_School.jpg');
+    background-size: cover; 
+    background-position: center; 
+    background-attachment: fixed; 
+    background-repeat: no-repeat; 
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* === UPDATED: Transparent Header === */
+.page-header {
+    width: 100%;
+    text-align: center;
+    padding: 40px 20px; /* Increased padding slightly for better look */
+    
+    /* 1. Made transparent */
+    background-color: transparent; 
+    
+    /* 2. Removed the box shadow */
+    box-shadow: none; 
+    
+    margin-bottom: 20px;
+    position: relative; 
+    z-index: 10; 
+}
+
+/* === UPDATED: High Contrast Text === */
+.page-header h1 {
+    font-size: 2.5em; /* Made slightly larger */
+    font-weight: 800; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 10px 0;
+    
+    /* 3. Changed color to white so it sits well on the image */
+    color: #ffffff; 
+    
+    /* 4. Added a strong black shadow so text is readable on ANY image */
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.page-header p {
+    font-size: 1.2em;
+    font-weight: 600;
+    
+    /* White text with shadow */
+    color: #f0f0f0;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
+}
+
+/* --- Pop-up Container Styles --- */
+.popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* This is the dark overlay. 
+       0.5 makes it dark enough to read the popup, 
+       but you can still see the university behind it. */
+    background-color: rgba(0, 0, 0, 0.5); 
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* --- Pop-up Content Box Styles --- */
+.popup-content {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); 
+    text-align: center;
+    max-width: 350px;
+    width: 90%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px); 
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Logo Styling */
+.logo-container {
+    margin-bottom: 25px;
+}
+
+.popup-logo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #ffffff; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Headings inside the popup (These stay dark for readability on white box) */
+.popup-content h2 {
+    color: #1a3a5e;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.popup-content p {
+    color: #6c757d;
+    margin-bottom: 30px;
+    text-shadow: none; /* No shadow needed inside the white box */
+}
+
+/* Button Styling */
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.btn {
+    flex-grow: 1;
+    padding: 12px 15px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 700; 
+    transition: all 0.3s ease;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.login-btn {
+    background-color: #4a89f8;
+    color: white;
+    border: 2px solid #4a89f8;
+}
+
+.login-btn:hover {
+    background-color: #386cd1;
+    border-color: #386cd1;
+    transform: translateY(-2px); 
+}
+
+.register-btn {
+    background-color: white;
+    color: #4a89f8;
+    border: 2px solid #4a89f8;
+}
+
+.register-btn:hover {
+    background-color: #e6f0ff;
+    color: #386cd1;
+    transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
