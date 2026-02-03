@@ -1,0 +1,112 @@
+/* User Management Specific Styles */
+
+/* Status Badge Styles */
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-progress {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-solved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Modal Large Size */
+.modal-large {
+    max-width: 600px;
+}
+
+/* Form Row */
+.form-row {
+    margin-bottom: 20px;
+}
+
+#editUserForm .form-group {
+    margin-bottom: 0;
+}
+
+#editUserForm .form-group label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+#editUserForm input,
+#editUserForm select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.3s ease;
+    background: white;
+}
+
+#editUserForm input:focus,
+#editUserForm select:focus {
+    border-color: #2D1B69;
+    box-shadow: 0 0 0 3px rgba(45, 27, 105, 0.1);
+}
+
+#editUserForm input::placeholder {
+    color: #d1d5db;
+}
+
+#editUserForm select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+}
+
+/* Password Field Styling */
+#editUserForm input[type="password"] {
+    letter-spacing: 2px;
+}
+
+/* Modal Footer Spacing */
+#editUserForm .modal-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Responsive Design for Modal */
+@media (max-width: 768px) {
+    .modal-large {
+        max-width: 95%;
+    }
+
+    #editUserForm {
+        padding: 20px;
+    }
+}
