@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Complaints - Student Complaint System</title>
+    <link rel="stylesheet" href="user-complaints.css">
+</head>
+<body>
+    <header class="top-header">
+        <button class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <h1 class="system-title">Student Complain Registration & Management System</h1>
+        <button class="logout-btn">Logout</button>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=John+Smith&background=4a3f7a&color=fff&size=60" alt="User Avatar" class="user-avatar">
+                <div class="user-info">
+                    <h3 class="user-name">John Smith</h3>
+                    <p class="user-role">User</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="user-dashboard.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                    </svg>
+                    Dashboard
+                </a>
+
+                <a href="user-complaints.html" class="nav-item active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Complaints
+                </a>
+
+                <a href="user-submit-complaint.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Submit Complaints
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <h1 class="page-title">Complaints</h1>
+
+            <div class="complaints-container">
+                <h2 class="section-title">List of Complaints</h2>
+
+                <div class="table-controls">
+                    <div class="entries-control">
+                        <span>Show</span>
+                        <select id="entriesPerPage">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>Entries</span>
+                    </div>
+
+                    <div class="search-control">
+                        <span>Search:</span>
+                        <input type="text" id="searchInput" placeholder="">
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="complaintsTable">
+                        <thead>
+                            <tr>
+                                <th>SN</th>
+                                <th>Category Name</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Assigned to</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Finance</td>
+                                <td>Payment Issue.....</td>
+                                <td>Finance</td>
+                                <td>01/01/2025</td>
+                                <td>Finance_admin</td>
+                                <td><span class="status-badge status-pending">Pending</span></td>
+                                <td></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn edit-btn" title="Edit" data-id="1">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                        <button class="action-btn delete-btn" title="Delete" data-id="1">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Exam</td>
+                                <td>Registration Issue...</td>
+                                <td>Exam</td>
+                                <td>01/05/2025</td>
+                                <td>Exam_admin</td>
+                                <td><span class="status-badge status-progress">In Progress</span></td>
+                                <td>Takes 3 days</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn edit-btn" title="Edit" data-id="2">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                        <button class="action-btn delete-btn" title="Delete" data-id="2">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>IT</td>
+                                <td>Account Locked</td>
+                                <td>IT</td>
+                                <td>21/12/2025</td>
+                                <td>IT_admin</td>
+                                <td><span class="status-badge status-solved">Solved</span></td>
+                                <td>Done</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn edit-btn" title="Edit" data-id="3">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                        <button class="action-btn delete-btn" title="Delete" data-id="3">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <div class="pagination-info">
+                        Show <span id="showingStart">1</span> to <span id="showingEnd">3</span> of <span id="totalEntries">3</span> entries
+                    </div>
+                    <div class="pagination-buttons">
+                        <button id="prevBtn" disabled>Previous</button>
+                        <button class="active">1</button>
+                        <button id="nextBtn" disabled>Next</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="user-complaints.js"></script>
+</body>
+</html>
