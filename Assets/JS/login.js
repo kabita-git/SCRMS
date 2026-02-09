@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
 
-        // If validation passes, simulate login
+        // If validation passes, send to server
         if (isValid) {
             // Show loading state
             const loginBtn = loginForm.querySelector('.login-btn');
@@ -67,16 +67,50 @@ document.addEventListener('DOMContentLoaded', function() {
             loginBtn.textContent = 'Logging in...';
             loginBtn.disabled = true;
 
-            // Simulate API call delay
-            setTimeout(function() {
-                // In a real application, you would make an API call here
-                // For now, we'll just redirect to dashboard
-                console.log('Login successful!');
-                console.log('Email:', email);
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('action', 'validate');
+            formData.append('email', email);
+            formData.append('password', password);
+
+            // Send to server for validation
+            fetch('index.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Login successful!');
+                    // Redirect to appropriate dashboard
+                    window.location.href = data.redirect;
+                } else {
+                    // Show server error message
+                    const serverError = document.createElement('div');
+                    serverError.style.cssText = 'background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;';
+                    serverError.textContent = data.message;
+                    loginForm.parentElement.insertBefore(serverError, loginForm);
+                    
+                    // Reset button
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
+
+                    // Auto-remove error after 5 seconds
+                    setTimeout(() => serverError.remove(), 5000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const serverError = document.createElement('div');
+                serverError.style.cssText = 'background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;';
+                serverError.textContent = 'An error occurred. Please try again.';
+                loginForm.parentElement.insertBefore(serverError, loginForm);
                 
-                // Redirect to dashboard
-                window.location.href = 'dashboard.html';
-            }, 1000);
+                loginBtn.textContent = originalText;
+                loginBtn.disabled = false;
+
+                setTimeout(() => serverError.remove(), 5000);
+            });
         }
     });
 
@@ -87,10 +121,12 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Password reset functionality will be implemented here.');
     });
 
-    // Register link handler
+    // Register link handler — navigate to registration page
     const registerLink = document.querySelector('.register-link');
-    registerLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        alert('Registration page will be implemented here.');
-    });
+    if (registerLink) {
+        registerLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'registration.php';
+        });
+    }
 });
