@@ -24,8 +24,8 @@ if ($res_comp && $row = $res_comp->fetch_assoc()) {
 
 // Fetch Solved Complaints
 $solved_complaints = 0;
-// Note: using complainst_solved as specified in the schema
-$res_solved = $conn->query("SELECT COUNT(*) as count FROM complaints c JOIN complainst_solved s ON c.status_id = s.status_id WHERE s.status_label = 'Solved'");
+// Note: using complaint_statuses as specified in the schema
+$res_solved = $conn->query("SELECT COUNT(*) as count FROM complaints c JOIN complaint_statuses s ON c.status_id = s.status_id WHERE s.status_label = 'Solved'");
 if ($res_solved && $row = $res_solved->fetch_assoc()) {
     $solved_complaints = $row['count'];
 }

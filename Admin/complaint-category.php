@@ -170,7 +170,11 @@ if ($res) {
                                 <?php foreach ($categories as $cat): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($cat['category_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($cat['description']); ?></td>
+                                        <td>
+                                            <div class="text-truncate">
+                                                <?php echo htmlspecialchars($cat['description']); ?>
+                                            </div>
+                                        </td>
                                         <td class="action-btns">
                                             <button class="edit-btn" title="Edit" data-id="<?php echo $cat['category_id']; ?>" data-name="<?php echo htmlspecialchars($cat['category_name']); ?>" data-desc="<?php echo htmlspecialchars($cat['description']); ?>">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
