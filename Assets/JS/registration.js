@@ -2,14 +2,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const registrationForm = document.getElementById('registrationForm');
     const fullNameInput = document.getElementById('fullName');
-    const studentIdInput = document.getElementById('studentId');
     const emailInput = document.getElementById('email');
+    const contactInput = document.getElementById('contact');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
     
     const fullNameError = document.getElementById('fullNameError');
-    const studentIdError = document.getElementById('studentIdError');
     const emailError = document.getElementById('emailError');
+    const contactError = document.getElementById('contactError');
     const passwordError = document.getElementById('passwordError');
     const confirmPasswordError = document.getElementById('confirmPasswordError');
 
@@ -25,14 +25,14 @@ document.addEventListener('DOMContentLoaded', function() {
         fullNameInput.style.borderColor = '#d1d5db';
     });
 
-    studentIdInput.addEventListener('input', function() {
-        studentIdError.textContent = '';
-        studentIdInput.style.borderColor = '#d1d5db';
-    });
-
     emailInput.addEventListener('input', function() {
         emailError.textContent = '';
         emailInput.style.borderColor = '#d1d5db';
+    });
+
+    contactInput.addEventListener('input', function() {
+        contactError.textContent = '';
+        contactInput.style.borderColor = '#d1d5db';
     });
 
     passwordInput.addEventListener('input', function() {
@@ -51,14 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Clear previous errors
         fullNameError.textContent = '';
-        studentIdError.textContent = '';
         emailError.textContent = '';
         passwordError.textContent = '';
         confirmPasswordError.textContent = '';
         
         fullNameInput.style.borderColor = '#d1d5db';
-        studentIdInput.style.borderColor = '#d1d5db';
         emailInput.style.borderColor = '#d1d5db';
+        contactInput.style.borderColor = '#d1d5db';
         passwordInput.style.borderColor = '#d1d5db';
         confirmPasswordInput.style.borderColor = '#d1d5db';
 
@@ -76,13 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
 
-        // Validate student ID
-        const studentId = studentIdInput.value.trim();
-        if (studentId === '') {
-            studentIdError.textContent = 'Student ID is required';
-            studentIdInput.style.borderColor = '#e74c3c';
-            isValid = false;
-        }
 
         // Validate email
         const email = emailInput.value.trim();
@@ -93,6 +85,18 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (!validateEmail(email)) {
             emailError.textContent = 'Please enter a valid email address';
             emailInput.style.borderColor = '#e74c3c';
+            isValid = false;
+        }
+
+        // Validate contact
+        const contact = contactInput.value.trim();
+        if (contact === '') {
+            contactError.textContent = 'Contact number is required';
+            contactInput.style.borderColor = '#e74c3c';
+            isValid = false;
+        } else if (contact.length < 10) {
+            contactError.textContent = 'Please enter a valid contact number';
+            contactInput.style.borderColor = '#e74c3c';
             isValid = false;
         }
 
@@ -131,8 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('action', 'register');
             formData.append('fullName', fullName);
-            formData.append('studentId', studentId);
             formData.append('email', email);
+            formData.append('contact', contact);
             formData.append('password', password);
             formData.append('confirmPassword', confirmPassword);
 
