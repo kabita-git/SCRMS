@@ -7,16 +7,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     header('Content-Type: application/json');
     
     $fullName = isset($_POST['fullName']) ? trim($_POST['fullName']) : '';
-    $studentId = isset($_POST['studentId']) ? trim($_POST['studentId']) : '';
     $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $contact = isset($_POST['contact']) ? trim($_POST['contact']) : '';
     $password = isset($_POST['password']) ? trim($_POST['password']) : '';
     $confirmPassword = isset($_POST['confirmPassword']) ? trim($_POST['confirmPassword']) : '';
     
-    // Validate inputs
-    if (empty($fullName) || empty($studentId) || empty($email) || empty($password) || empty($confirmPassword)) {
-        echo json_encode(['success' => false, 'message' => 'All fields are required']);
-        exit;
-    }
     
     // Validate email format
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -64,15 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
     
     // Insert into database
-    $stmt = $conn->prepare("INSERT INTO users (first_name, middle_name, last_name, email, password, role, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+    $stmt = $conn->prepare("INSERT INTO users (first_name, middle_name, last_name, email, contact, password, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
     
     if (!$stmt) {
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
         exit;
     }
     
-    $role = 'user'; // Default role for new registrations
-    $stmt->bind_param("ssssss", $firstName, $middleName, $lastName, $email, $hashedPassword, $role);
+    $role = 'User'; // Default role for new registrations
+    $stmt->bind_param("sssssss", $firstName, $middleName, $lastName, $email, $contact, $hashedPassword, $role);
     
     if ($stmt->execute()) {
         echo json_encode([
@@ -92,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Start session for redirect if already logged in
 session_start();
 if (isset($_SESSION['user_id'])) {
-    $redirect = ($_SESSION['user_role'] === 'admin') ? 'Admin/dashboard.html' : 'User/user-dashboard.html';
+    $redirect = in_array($_SESSION['user_role'], ['Admin', 'DeptAdmin', 'UpperBody']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
     header("Location: " . $redirect);
     exit;
 }
@@ -103,7 +98,7 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account - Student Complaint System</title>
-    <link rel="stylesheet" href="Assets/Css/registration.css">
+    <link rel="stylesheet" href="Assets/css/registration.css">
 </head>
 <body>
     <div class="registration-container">
@@ -123,15 +118,15 @@ if (isset($_SESSION['user_id'])) {
             </div>
 
             <div class="form-group">
-                <label for="studentId">Student ID / Roll Number <span class="required">*</span></label>
-                <input type="text" id="studentId" name="studentId" required>
-                <span class="error-message" id="studentIdError"></span>
-            </div>
-
-            <div class="form-group">
                 <label for="email">Email Address <span class="required">*</span></label>
                 <input type="email" id="email" name="email" required>
                 <span class="error-message" id="emailError"></span>
+            </div>
+            
+            <div class="form-group">
+                <label for="contact">Contact Number <span class="required">*</span></label>
+                <input type="text" id="contact" name="contact" required>
+                <span class="error-message" id="contactError"></span>
             </div>
 
             <div class="form-group">
