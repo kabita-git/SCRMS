@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
     
     // Query database for user
-    $stmt = $conn->prepare("SELECT user_id, first_name, middle_name, last_name, password, role, department_id FROM users WHERE email = ?");
+    $stmt = $conn->prepare("SELECT user_id, first_name, middle_name, last_name, password, role, contact FROM users WHERE email = ?");
     
     if (!$stmt) {
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
@@ -40,10 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $_SESSION['last_name'] = $user['last_name'];
             $_SESSION['user_email'] = $email;
             $_SESSION['user_role'] = $user['role'];
-            $_SESSION['department_id'] = $user['department_id'];
+            $_SESSION['contact'] = $user['contact'];    
             
             // Determine redirect based on role (PHP dashboard placeholders)
-            $redirect = ($user['role'] === 'admin') ? 'Admin/dashboard.php' : 'User/user-dashboard.php';
+            $redirect = in_array($user['role'], ['Admin', 'DeptAdmin', 'UpperBody']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
             
             echo json_encode([
                 'success' => true, 
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 session_start();
 if (isset($_SESSION['user_id'])) {
     // Redirect if already logged in to PHP dashboards
-    $redirect = ($_SESSION['user_role'] === 'admin') ? 'Admin/dashboard.php' : 'User/user-dashboard.php';
+    $redirect = in_array($_SESSION['user_role'], ['Admin', 'DeptAdmin', 'UpperBody']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
     header("Location: " . $redirect);
     exit;
 }
@@ -77,7 +77,7 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Complaint System</title>
-    <link rel="stylesheet" href="Assets/Css/login.css">
+    <link rel="stylesheet" href="Assets/css/login.css">
 </head>
 <body>
     <div class="login-container">
@@ -137,6 +137,6 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
 
-    <script src="Assets/JS/login.js"></script>
+    <script src="Assets/js/login.js"></script>
 </body>
 </html>
