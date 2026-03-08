@@ -1,0 +1,73 @@
+/* Custom Logout Modal */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+/* Support both .show (logout) and .active (delete/confirm modals) */
+.custom-modal-overlay.show,
+.custom-modal-overlay.active {
+    display: flex !important;
+}
+
+.custom-modal-box {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: modalSlideIn 0.3s ease;
+    min-width: 320px;
+}
+
+.custom-modal-overlay.show .custom-modal-box {
+    transform: translateY(0);
+}
+
+.custom-modal-box h3 {
+    margin-bottom: 25px;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.custom-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.custom-modal-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn-cancel {
+    background: #e0e0e0;
+    color: #444;
+}
+
+.modal-btn-cancel:hover {
+    background: #d0d0d0;
+}
+
+.modal-btn-confirm {
+    background: #e74c3c;
+    color: white;
+}
+
+.modal-btn-confirm:hover {
+    background: #c0392b;
+}

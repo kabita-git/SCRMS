@@ -1,0 +1,145 @@
+/* Sidebar Container (Styling from User Dashboard) */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 300px;
+    height: 100vh;
+    background: #2D1B69;
+    color: white;
+    padding: 30px 0;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    padding: 0 20px;
+}
+
+/* Logged in User Area (Logic from Admin Dashboard) */
+.user-profile {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.user-role {
+    font-size: 14px;
+    color: #a8b3cf;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    margin-top: 20px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 30px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-item svg {
+    min-width: 20px;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.nav-item.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-left: 4px solid white;
+}
+
+/* Dropdown Menu (From Admin Dashboard) */
+.dropdown-icon {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.nav-item-group .nav-item.active .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.nav-dropdown.active {
+    max-height: 200px;
+}
+
+.nav-subitem {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px 12px 52px;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-subitem::before {
+    content: '';
+    position: absolute;
+    left: 32px;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+}
+
+.nav-subitem:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Responsive Design (From User Dashboard) */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -300px;
+        height: 100vh;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.active {
+        transform: translateX(300px);
+    }
+}
