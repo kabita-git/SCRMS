@@ -10,21 +10,24 @@ require_once '../Database/db-config.php';
 $message = "";
 $messageType = "";
 
-// Handle status updates and deletion
+// Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $complaintId = isset($_POST['complaintId']) ? intval($_POST['complaintId']) : 0;
 
     if ($action === 'update_status') {
         $statusId = isset($_POST['statusId']) ? intval($_POST['statusId']) : 0;
-        $stmt = $conn->prepare("UPDATE complaints SET status_id = ? WHERE complaint_id = ?");
+        $statusMessage = isset($_POST['statusMessage']) ? trim($_POST['statusMessage']) : '';
+
+        // We no longer manually update assigned_to here as it's automatic based on category
+        $stmt = $conn->prepare("UPDATE complaints SET status_id = ?, final_status_message = ?, updated_at = NOW() WHERE complaint_id = ?");
         if ($stmt) {
-            $stmt->bind_param("ii", $statusId, $complaintId);
+            $stmt->bind_param("isi", $statusId, $statusMessage, $complaintId);
             if ($stmt->execute()) {
-                $_SESSION['message'] = "Complaint status updated successfully!";
+                $_SESSION['message'] = "Complaint updated successfully!";
                 $_SESSION['messageType'] = "success";
             } else {
-                $_SESSION['message'] = "Error updating status: " . $conn->error;
+                $_SESSION['message'] = "Error updating complaint: " . $conn->error;
                 $_SESSION['messageType'] = "error";
             }
             $stmt->close();
@@ -42,37 +45,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
             $stmt->close();
         }
-    } elseif ($action === 'get_attachments') {
-        $complaintId = isset($_GET['complaintId']) ? intval($_GET['complaintId']) : (isset($_POST['complaintId']) ? intval($_POST['complaintId']) : 0);
-        $attachments = [];
-        $stmt = $conn->prepare("SELECT attachment_id, file_name, file_type FROM complaint_attachments WHERE complaint_id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $complaintId);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            while ($row = $result->fetch_assoc()) {
-                $attachments[] = $row;
-            }
-            $stmt->close();
-        }
-        echo json_encode($attachments);
-        exit;
-    } elseif ($action === 'delete_attachment') {
-        $attachmentId = isset($_POST['attachmentId']) ? intval($_POST['attachmentId']) : 0;
-        $stmt = $conn->prepare("DELETE FROM complaint_attachments WHERE attachment_id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $attachmentId);
-            if ($stmt->execute()) {
-                echo json_encode(['success' => true]);
-            } else {
-                echo json_encode(['success' => false, 'error' => $conn->error]);
-            }
-            $stmt->close();
-        }
-        exit;
     }
 
     header("Location: complaint-management.php");
+    exit;
+}
+
+// Handle GET actions (AJAX)
+if (isset($_GET['action']) && $_GET['action'] === 'get_attachments') {
+    $complaintId = isset($_GET['complaintId']) ? intval($_GET['complaintId']) : 0;
+    $attachments = [];
+    $stmt = $conn->prepare("SELECT attachment_id, file_name, file_type FROM complaint_attachments WHERE complaint_id = ?");
+    if ($stmt) {
+        $stmt->bind_param("i", $complaintId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $attachments[] = $row;
+        }
+        $stmt->close();
+    }
+    header('Content-Type: application/json');
+    echo json_encode($attachments);
     exit;
 }
 
@@ -84,6 +78,17 @@ if (isset($_SESSION['message'])) {
     unset($_SESSION['messageType']);
 }
 
+// Fetch current user info for DeptAdmin filtering
+$assigned_category = null;
+if ($_SESSION['user_role'] === 'DeptAdmin') {
+    $stmt = $conn->prepare("SELECT assigned_category FROM users WHERE user_id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->bind_result($assigned_category);
+    $stmt->fetch();
+    $stmt->close();
+}
+
 // Fetch statuses for dropdown
 $statuses = [];
 $res_status = $conn->query("SELECT * FROM complaint_statuses ORDER BY status_id ASC");
@@ -93,13 +98,31 @@ if ($res_status) {
     }
 }
 
-// Fetch complaints
+// Fetch DeptAdmins for assignment dropdown
+$deptAdmins = [];
+$res_admins = $conn->query("SELECT user_id, first_name, last_name FROM users WHERE role = 'DeptAdmin' AND status = 'Active'");
+if ($res_admins) {
+    while ($row = $res_admins->fetch_assoc()) {
+        $deptAdmins[] = $row;
+    }
+}
+
+// Fetch complaints with assignment info
 $complaints = [];
-$sql = "SELECT c.*, cat.category_name, s.status_label, u.first_name, u.last_name 
+$whereClause = "";
+if ($_SESSION['user_role'] === 'DeptAdmin') {
+    $whereClause = "WHERE c.category_id = " . ($assigned_category !== null ? intval($assigned_category) : -1);
+}
+
+$sql = "SELECT c.*, cat.category_name, s.status_label, 
+               u.first_name, u.last_name, u.email,
+               dept_head.first_name as assign_first, dept_head.last_name as assign_last
         FROM complaints c
         LEFT JOIN complaint_categories cat ON c.category_id = cat.category_id
         LEFT JOIN complaint_statuses s ON c.status_id = s.status_id
         LEFT JOIN users u ON c.user_id = u.user_id
+        LEFT JOIN users dept_head ON dept_head.assigned_category = c.category_id AND dept_head.role = 'DeptAdmin'
+        $whereClause
         ORDER BY c.created_at DESC";
 $res_comp = $conn->query($sql);
 if ($res_comp) {
@@ -107,6 +130,9 @@ if ($res_comp) {
         $complaints[] = $row;
     }
 }
+
+// Pass status messages to JS
+echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
 ?>
 <html lang="en">
 <head>
@@ -164,9 +190,12 @@ if ($res_comp) {
                                 <th>SN</th>
                                 <th>Category</th>
                                 <th>Title</th>
-                                <th>Description</th>
-                                <th>Date</th>
+                                <th>Created At</th>
+                                <th>Updated At</th>
                                 <th>Complainant</th>
+                                <?php if ($_SESSION['user_role'] !== 'DeptAdmin'): ?>
+                                    <th>Assigned To</th>
+                                <?php endif; ?>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -174,7 +203,7 @@ if ($res_comp) {
                         <tbody id="tableBody">
                             <?php if (empty($complaints)): ?>
                                 <tr>
-                                    <td colspan="8" style="text-align: center;">No complaints found.</td>
+                                    <td colspan="<?php echo $_SESSION['user_role'] === 'DeptAdmin' ? '8' : '9'; ?>" style="text-align: center;">No complaints found.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($complaints as $index => $comp): ?>
@@ -182,13 +211,28 @@ if ($res_comp) {
                                         <td><?php echo $index + 1; ?></td>
                                         <td><?php echo htmlspecialchars($comp['category_name']); ?></td>
                                         <td><?php echo htmlspecialchars($comp['title']); ?></td>
-                                        <td>
-                                            <div class="text-truncate">
-                                                <?php echo htmlspecialchars($comp['description']); ?>
-                                            </div>
-                                        </td>
                                         <td><?php echo date('Y-m-d', strtotime($comp['created_at'])); ?></td>
-                                        <td><?php echo htmlspecialchars($comp['first_name'] . ' ' . $comp['last_name']); ?></td>
+                                        <td><?php echo $comp['updated_at'] ? date('Y-m-d H:i', strtotime($comp['updated_at'])) : '---'; ?></td>
+                                        <td>
+                                            <?php 
+                                                if ($comp['is_anonymous']) {
+                                                    echo '<span class="status-badge" style="background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;">Anonymous</span>';
+                                                } else {
+                                                    echo htmlspecialchars($comp['first_name'] . ' ' . $comp['last_name']);
+                                                }
+                                            ?>
+                                        </td>
+                                        <?php if ($_SESSION['user_role'] !== 'DeptAdmin'): ?>
+                                            <td>
+                                                <?php 
+                                                    if ($comp['assign_first']) {
+                                                        echo htmlspecialchars($comp['assign_first'] . ' ' . $comp['assign_last']);
+                                                    } else {
+                                                        echo '<span style="color: #999; font-style: italic;">Not Assigned</span>';
+                                                    }
+                                                ?>
+                                            </td>
+                                        <?php endif; ?>
                                         <td>
                                             <?php 
                                                 $statusClass = 'status-pending';
@@ -200,21 +244,44 @@ if ($res_comp) {
                                             </span>
                                         </td>
                                         <td class="action-btns">
-                                            <button class="edit-btn" title="Update Status" 
+                                            <button class="view-btn" title="View Details"
+                                                    data-id="<?php echo $comp['complaint_id']; ?>"
+                                                    data-category="<?php echo htmlspecialchars($comp['category_name']); ?>"
+                                                    data-title="<?php echo htmlspecialchars($comp['title']); ?>"
+                                                    data-desc="<?php echo htmlspecialchars($comp['description']); ?>"
+                                                    data-date="<?php echo date('Y-m-d H:i', strtotime($comp['created_at'])); ?>"
+                                                    data-updated="<?php echo $comp['updated_at'] ? date('Y-m-d H:i', strtotime($comp['updated_at'])) : ''; ?>"
+                                                    data-complainant="<?php echo $comp['is_anonymous'] ? 'Anonymous' : htmlspecialchars($comp['first_name'] . ' ' . $comp['last_name']); ?>"
+                                                    data-email="<?php echo $comp['is_anonymous'] ? '---' : htmlspecialchars($comp['email']); ?>"
+                                                    data-batch="<?php echo htmlspecialchars($comp['batch']); ?>"
+                                                    data-incident-date="<?php echo $comp['incident_date'] ? date('Y-m-d', strtotime($comp['incident_date'])) : '---'; ?>"
+                                                    data-assigned-name="<?php echo $comp['assign_first'] ? htmlspecialchars($comp['assign_first'] . ' ' . $comp['assign_last']) : 'Not Assigned'; ?>"
+                                                    data-status-label="<?php echo htmlspecialchars($comp['status_label']); ?>">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                </svg>
+                                            </button>
+
+                                            <button class="edit-btn" title="<?php echo ($_SESSION['user_role'] === 'DeptAdmin') ? 'Write Remarks' : 'Update Status & Remarks'; ?>" 
                                                     data-id="<?php echo $comp['complaint_id']; ?>"
                                                     data-status="<?php echo $comp['status_id']; ?>"
+                                                    data-message="<?php echo htmlspecialchars($comp['final_status_message'] ?? ''); ?>"
                                                     data-title="<?php echo htmlspecialchars($comp['title']); ?>">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                                 </svg>
                                             </button>
-                                            <button class="delete-btn" title="Delete" data-id="<?php echo $comp['complaint_id']; ?>">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                </svg>
-                                            </button>
+
+                                            <?php if ($_SESSION['user_role'] !== 'DeptAdmin'): ?>
+                                                <button class="delete-btn" title="Delete" data-id="<?php echo $comp['complaint_id']; ?>">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    </svg>
+                                                </button>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -236,37 +303,137 @@ if ($res_comp) {
         </main>
     </div>
 
-    <!-- Edit Status Modal -->
-    <div class="modal" id="statusModal">
+
+    <!-- Update Status & Assignment Modal -->
+    <div class="modal" id="statusModal" style="z-index: 99999;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="statusModalTitle">Update Status</h3>
+                <h3 class="modal-title" id="statusModalTitle"><?php echo ($_SESSION['user_role'] === 'DeptAdmin') ? 'Write Remarks' : 'Update Status & Remarks'; ?></h3>
                 <button class="modal-close" id="statusModalClose">&times;</button>
             </div>
             <form id="statusForm" method="POST" action="">
                 <input type="hidden" name="action" value="update_status">
                 <input type="hidden" name="complaintId" id="statusComplaintId">
-                <div class="form-group" style="padding: 20px;">
-                    <label>Complaint Title</label>
-                    <p id="displayTitle" style="font-weight: 600; margin-bottom: 15px; color: #333;"></p>
+                <div style="padding: 20px;">
+                    <div class="form-group" style="padding: 0 0 15px 0;">
+                        <label>Complaint Title</label>
+                        <p id="displayTitle" style="font-weight: 600; margin-top: 5px; color: #333;"></p>
+                    </div>
                     
-                    <label>Select Status <span class="required">*</span></label>
-                    <select name="statusId" id="statusId" required>
-                        <?php foreach ($statuses as $status): ?>
-                            <option value="<?php echo $status['status_id']; ?>"><?php echo htmlspecialchars($status['status_label']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div class="form-group" style="padding: 0 0 15px 0;">
+                        <label>Select Status <span class="required">*</span></label>
+                        <select name="statusId" id="statusId" required>
+                            <option value="">Select Status</option>
+                            <?php foreach ($statuses as $status): ?>
+                                <option value="<?php echo $status['status_id']; ?>"><?php echo htmlspecialchars($status['status_label']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p id="statusDefaultMessage" style="font-size: 12px; color: #666; font-style: italic; margin-top: 5px;"></p>
+                    </div>
+
+                    <div class="form-group" style="padding: 0;">
+                        <label>Remarks</label>
+                        <textarea name="statusMessage" id="statusMessage" rows="4" placeholder="Update the student about the progress..."></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" id="statusCancelBtn">Close</button>
-                    <button type="submit" class="btn-primary">Update</button>
+                    <button type="submit" class="btn-primary">Update Complaint</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- View Details Modal (Enhanced) -->
+    <div class="modal" id="viewModal" style="z-index: 99999;">
+        <div class="modal-content" style="max-width: 800px; width: 95%;">
+            <div class="modal-header">
+                <h3 class="modal-title">Complaint Details</h3>
+                <button class="modal-close" id="viewModalClose">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div class="view-details-container">
+                    <!-- Left Sidebar / Info Summary -->
+                    <div class="view-sidebar">
+                        <div class="sidebar-info-group">
+                            <label>Status</label>
+                            <div id="viewStatus" class="status-badge-container"></div>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Complaint ID</label>
+                            <p id="viewId" style="font-weight: 600;"></p>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Assigned To</label>
+                            <p id="viewAssignedName"></p>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Created On</label>
+                            <p id="viewDate"></p>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Last Updated</label>
+                            <p id="viewUpdated"></p>
+                        </div>
+                    </div>
+
+                    <!-- Right Top Content -->
+                    <div class="view-main">
+                        <div class="view-section">
+                            <h4 class="section-title">General Information</h4>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label>Category</label>
+                                    <p id="viewCategory"></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Incident Date</label>
+                                    <p id="viewIncidentDate"></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Complainant</label>
+                                    <p id="viewComplainant"></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Batch</label>
+                                    <p id="viewBatch"></p>
+                                </div>
+                                <div class="info-item" style="grid-column: span 2;">
+                                    <label>Email Address</label>
+                                    <p id="viewEmail"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Full Width Content -->
+                <div class="view-full-content">
+                    <div class="view-section">
+                        <h4 class="section-title">Complaint Statement</h4>
+                        <div class="statement-box">
+                            <h5 id="viewTitle" class="statement-title"></h5>
+                            <p id="viewDesc" class="statement-text"></p>
+                        </div>
+                    </div>
+
+                    <div class="view-section">
+                        <h4 class="section-title">Evidence & Attachments</h4>
+                        <div id="viewAttachments" class="attachments-list">
+                            <!-- Loaded via JS -->
+                            <p class="no-attachments">Loading attachments...</p>
+                        </div>
+                    </div>
+                </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="viewCancelBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Delete Confirmation Modal -->
-    <div id="deleteModal" class="custom-modal-overlay">
+    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
         <div class="custom-modal-box">
             <h3 id="deleteMessage">Are you sure you want to delete this complaint?</h3>
             <div class="custom-modal-actions" id="deleteActions">
@@ -277,7 +444,7 @@ if ($res_comp) {
     </div>
 
     <!-- File Removal Confirmation Modal (Admin) -->
-    <div id="fileDeleteModal" class="custom-modal-overlay">
+    <div id="fileDeleteModal" class="custom-modal-overlay" style="z-index: 99999;">
         <div class="custom-modal-box">
             <h3 style="margin-bottom: 20px;">Are you sure you want to remove this evidence file?</h3>
             <div class="custom-modal-actions">
