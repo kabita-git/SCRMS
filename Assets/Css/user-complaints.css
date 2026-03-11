@@ -311,24 +311,7 @@ tr:hover {
 }
 
 @media (max-width: 768px) {
-    .sidebar {
-        position: fixed;
-        left: -300px;
-        height: 100vh;
-        z-index: 1000;
-    }
-
-    .sidebar.active {
-        transform: translateX(300px);
-    }
-
-    .main-content {
-        margin-left: 0;
-    }
-
-    .top-header {
-        margin-left: 0;
-    }
+    /* sidebar, hamburger, top-header, main-content — handled in sidebar.css */
 
     .table-controls {
         flex-direction: column;

@@ -223,16 +223,27 @@
     cursor: not-allowed;
 }
 
-/* Text Truncation */
+/* Description column — constrained width so it doesn't dominate the table */
+.data-table td.desc-cell {
+    max-width: 320px;
+    width: 320px;
+    vertical-align: top;
+}
+
+/* Text Truncation — clamp to 3 lines with ellipsis */
 .text-truncate {
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    /* Limit to 2 lines */
-    line-clamp: 2;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     word-break: break-word;
+    line-height: 1.55;
+    max-height: calc(1.55em * 3);   /* fallback for older browsers */
+    color: #4b5563;
+    font-size: 13.5px;
+    cursor: default;
 }
 
 /* Responsive Design */
