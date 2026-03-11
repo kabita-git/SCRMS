@@ -22,6 +22,50 @@ body {
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-left: 300px; /* Offset for sidebar */
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.hamburger-menu {
+    display: none;
+    background: none;
+    border: none;
+    color: #2D1B69;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.hamburger-menu:hover {
+    background: rgba(45, 27, 105, 0.05);
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 950;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .system-title {
@@ -61,10 +105,11 @@ body {
     padding: 30px 0;
     position: fixed;
     left: 0;
-    top: 70px;
+    top: 0; /* Changed from 70px to cover full height */
     bottom: 0;
     overflow-y: auto;
     transition: transform 0.3s ease;
+    z-index: 1000;
 }
 
 .sidebar-header {
@@ -299,12 +344,13 @@ body {
 }
 
 @media (max-width: 768px) {
-    .menu-toggle {
-        display: block;
+    .top-header {
+        margin-left: 0;
+        padding: 15px 20px;
     }
 
-    .system-title {
-        font-size: 16px;
+    .hamburger-menu {
+        display: block;
     }
 
     .sidebar {
@@ -316,7 +362,7 @@ body {
     }
 
     .main-content {
-        margin-left: 0;
+        margin-left: 0 !important;
         padding: 20px;
     }
 
@@ -356,7 +402,7 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 2000;
+    z-index: 3000;
     align-items: center;
     justify-content: center;
 }
@@ -385,7 +431,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 25px;
+    padding: 25px 35px;
     border-bottom: 1px solid #e5e7eb;
 }
 
@@ -409,7 +455,7 @@ body {
 }
 
 .modal-footer {
-    padding: 15px 25px;
+    padding: 20px 35px;
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
@@ -460,6 +506,7 @@ body {
 /* Common Form Elements in Modals */
 .form-group {
     margin-bottom: 20px;
+    padding: 0 35px;
 }
 
 .form-group label {

@@ -161,6 +161,28 @@ textarea:focus {
     border-color: #2D1B69;
 }
 
+.calendar-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.calendar-input-wrapper input {
+    padding-right: 45px !important;
+}
+
+.calendar-icon {
+    position: absolute;
+    right: 15px;
+    color: #6b7280;
+    pointer-events: none;
+    transition: color 0.3s;
+}
+
+.calendar-input-wrapper:focus-within .calendar-icon {
+    color: #2D1B69;
+}
+
 textarea {
     min-height: 120px;
     resize: vertical;
@@ -367,4 +389,4 @@ textarea {
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-}
+}

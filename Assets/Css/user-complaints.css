@@ -15,7 +15,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-left: 300px;
 }
 
@@ -117,7 +117,7 @@ body {
     background: white;
     padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -173,6 +173,8 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: auto;
+    /* Ensure dynamic fitting */
 }
 
 th {
@@ -183,7 +185,6 @@ th {
     color: #333;
     border: 1px solid #dee2e6;
     font-size: 14px;
-    white-space: nowrap;
 }
 
 td {
@@ -195,6 +196,13 @@ td {
 
 tr:hover {
     background: #f8f9fa;
+}
+
+.description-text {
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .status-badge {
@@ -227,23 +235,35 @@ tr:hover {
 }
 
 .action-btn {
-    background: none;
+    padding: 8px;
     border: none;
+    border-radius: 6px;
     cursor: pointer;
-    padding: 4px;
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
 }
 
 .action-btn:hover {
     transform: scale(1.1);
 }
 
-.edit-btn {
-    color: #5cb85c;
+.view-btn {
+    background: #2D1B69;
+}
+
+.view-btn:hover {
+    background: #3a2f6a;
 }
 
 .delete-btn {
-    color: #dc3545;
+    background: #dc3545;
+}
+
+.delete-btn:hover {
+    background: #c82333;
 }
 
 .pagination {

@@ -34,23 +34,40 @@ body::before {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 450px;
+    max-width: 500px;
     padding: 20px;
+    animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Login Card */
 .login-card {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 50px 40px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.login-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0px;
 }
 
 /* User Icon */
 .user-icon {
-    margin-bottom: 30px;
+    margin-bottom: 10px;
 }
 
 /* Login Title */
@@ -58,16 +75,19 @@ body::before {
     font-size: 28px;
     font-weight: 600;
     color: #1a1a1a;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
 
 /* Form Styles */
 .login-form {
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .form-group {
-    margin-bottom: 25px;
+    margin-bottom: 0;
 }
 
 .form-group label {
@@ -75,7 +95,7 @@ body::before {
     font-size: 14px;
     font-weight: 500;
     color: #333;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .required {
@@ -84,7 +104,7 @@ body::before {
 
 .form-group input {
     width: 100%;
-    padding: 14px 16px;
+    padding: 10px 14px;
     font-size: 15px;
     border: 1px solid #d1d5db;
     border-radius: 8px;
@@ -95,7 +115,8 @@ body::before {
 
 .form-group input:focus {
     border-color: #2D1B69;
-    box-shadow: 0 0 0 3px rgba(45, 27, 105, 0.1);
+    box-shadow: 0 0 0 4px rgba(45, 27, 105, 0.15);
+    background: #fff;
 }
 
 .form-group input::placeholder {
@@ -107,14 +128,13 @@ body::before {
     display: block;
     color: #e74c3c;
     font-size: 13px;
-    margin-top: 5px;
-    min-height: 18px;
+    margin-top: 2px;
 }
 
 /* Login Button */
 .login-btn {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     font-size: 16px;
     font-weight: 600;
     color: white;
@@ -127,9 +147,9 @@ body::before {
 }
 
 .login-btn:hover {
-    background: #3d2580;
+    background: #402694;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(45, 27, 105, 0.3);
+    box-shadow: 0 8px 20px rgba(45, 27, 105, 0.4);
 }
 
 .login-btn:active {
@@ -143,7 +163,7 @@ body::before {
     color: #6366f1;
     font-size: 14px;
     text-decoration: none;
-    margin-top: 20px;
+    margin-top: 5px;
     transition: color 0.3s ease;
 }
 
@@ -157,7 +177,7 @@ body::before {
     text-align: center;
     color: #4b5563;
     font-size: 14px;
-    margin-top: 25px;
+    margin-top: 10px;
 }
 
 .register-link {
