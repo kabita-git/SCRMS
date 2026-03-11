@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? $_SESSION['role'] ?? '', ['Admin', 'DeptAdmin', 'UpperBody'])) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? $_SESSION['role'] ?? '', ['Admin', 'UpperBody'])) {
     header('Location: /index.php');
     exit;
 }
@@ -16,11 +16,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $userId = isset($_POST['userId']) ? intval($_POST['userId']) : 0;
     if ($action === 'update_user') {
         $role = isset($_POST['role']) ? trim($_POST['role']) : '';
+        $assignedCategory = isset($_POST['assignedCategory']) && $_POST['role'] === 'DeptAdmin' ? intval($_POST['assignedCategory']) : null;
 
-        $stmt = $conn->prepare("UPDATE users SET role = ? WHERE user_id = ?");
+        $stmt = $conn->prepare("UPDATE users SET role = ?, assigned_category = ? WHERE user_id = ?");
         if ($stmt) {
-            $stmt->bind_param("si", $role, $userId);
+            $stmt->bind_param("sii", $role, $assignedCategory, $userId);
             if ($stmt->execute()) {
+                // If the user's role is changed to something other than 'User', clear batch & program
+                if ($role !== 'User') {
+                    $clearStmt = $conn->prepare("UPDATE users SET batch = NULL, program = NULL WHERE user_id = ?");
+                    if ($clearStmt) {
+                        $clearStmt->bind_param("i", $userId);
+                        $clearStmt->execute();
+                        $clearStmt->close();
+                    }
+                }
                 $_SESSION['message'] = "User updated successfully!";
                 $_SESSION['messageType'] = "success";
             } else {
@@ -56,9 +66,23 @@ if (isset($_SESSION['message'])) {
     unset($_SESSION['messageType']);
 }
 
+// Fetch categories for DeptAdmin assignment
+$categories = [];
+$res_cats = $conn->query("SELECT category_id, category_name FROM complaint_categories ORDER BY category_name ASC");
+if ($res_cats) {
+    while ($row = $res_cats->fetch_assoc()) {
+        $categories[] = $row;
+    }
+}
+
 // Fetch users
 $users = [];
-$res_users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
+$sql = "SELECT u.*, c.category_name 
+        FROM users u 
+        LEFT JOIN complaint_categories c ON u.assigned_category = c.category_id 
+        WHERE u.role != 'Admin' 
+        ORDER BY u.created_at DESC";
+$res_users = $conn->query($sql);
 if ($res_users) {
     while ($row = $res_users->fetch_assoc()) {
         $users[] = $row;
@@ -145,7 +169,14 @@ if ($res_users) {
                                         <td><?php echo htmlspecialchars($fullName); ?></td>
                                         <td><?php echo htmlspecialchars($u['email']); ?></td>
                                         <td><?php echo htmlspecialchars($u['contact'] ?? ''); ?></td>
-                                        <td><?php echo htmlspecialchars($u['role']); ?></td>
+                                        <td>
+                                            <?php 
+                                                echo htmlspecialchars($u['role']); 
+                                                if ($u['role'] === 'DeptAdmin' && $u['category_name']) {
+                                                    echo ' <small style="display:block; color:#666;">(' . htmlspecialchars($u['category_name']) . ')</small>';
+                                                }
+                                            ?>
+                                        </td>
                                         <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($displayStatus); ?></span></td>
                                         <td class="action-btns">
                                             <button class="edit-btn" title="Edit" 
@@ -156,6 +187,7 @@ if ($res_users) {
                                                     data-email="<?php echo htmlspecialchars($u['email']); ?>"
                                                     data-contact="<?php echo htmlspecialchars($u['contact'] ?? ''); ?>"
                                                     data-role="<?php echo htmlspecialchars($u['role']); ?>"
+                                                    data-category="<?php echo $u['assigned_category'] ?? ''; ?>"
                                                     data-status="<?php echo htmlspecialchars($displayStatus); ?>">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -192,7 +224,7 @@ if ($res_users) {
     </div>
 
     <!-- Edit User Modal -->
-    <div class="modal" id="editUserModal">
+    <div class="modal" id="editUserModal" style="z-index: 99999;">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Edit User</h3>
@@ -239,6 +271,15 @@ if ($res_users) {
                             <input type="text" id="userStatus" readonly style="background-color: #f9fafb; cursor: not-allowed;">
                         </div>
                     </div>
+                    <div class="form-group" id="categoryAssignmentGroup" style="display: none; margin-top: 15px;">
+                        <label>Assign Complaint Category (For DeptAdmin) <span class="required">*</span></label>
+                        <select name="assignedCategory" id="assignedCategory">
+                            <option value="">Select Category</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" id="cancelBtn">Close</button>
@@ -249,7 +290,7 @@ if ($res_users) {
     </div>
 
     <!-- Custom Delete Modal Overlay -->
-    <div id="deleteModal" class="custom-modal-overlay">
+    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
         <div class="custom-modal-box">
             <h3>Are you sure you want to delete this user?</h3>
             <div class="custom-modal-actions">
