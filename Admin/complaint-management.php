@@ -461,6 +461,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
     </form>
 
     <script src="../Assets/JS/admin-dashboard.js"></script>
+    <script src="../Assets/JS/table-pagination.js"></script>
     <script src="../Assets/JS/complaint-management.js"></script>
 </body>
 </html>

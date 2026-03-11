@@ -307,6 +307,7 @@ if ($res_users) {
     </form>
 
     <script src="../Assets/JS/admin-dashboard.js"></script>
+    <script src="../Assets/JS/table-pagination.js"></script>
     <script src="../Assets/JS/user-management.js"></script>
 </body>
 </html>

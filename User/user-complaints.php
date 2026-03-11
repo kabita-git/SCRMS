@@ -306,6 +306,7 @@ if ($stmt) {
         <input type="hidden" name="complaintId" id="deleteCompId">
     </form>
 
+    <script src="../Assets/JS/table-pagination.js"></script>
     <script src="../Assets/JS/user-complaints.js"></script>
     <script src="../Assets/JS/alerts.js"></script>
 </body>

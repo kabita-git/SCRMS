@@ -249,6 +249,7 @@ if ($res) {
 
     <script src="../Assets/JS/admin-dashboard.js"></script>
     <script src="../Assets/JS/alerts.js"></script>
+    <script src="../Assets/JS/table-pagination.js"></script>
     <script src="../Assets/JS/reports.js"></script>
 </body>
 </html>

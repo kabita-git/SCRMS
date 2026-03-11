@@ -201,7 +201,7 @@ if ($res) {
                                 <?php foreach ($categories as $cat): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($cat['category_name']); ?></td>
-                                        <td>
+                                        <td class="desc-cell" title="<?php echo htmlspecialchars($cat['description']); ?>">
                                             <div class="text-truncate">
                                                 <?php echo htmlspecialchars($cat['description']); ?>
                                             </div>
@@ -310,6 +310,7 @@ if ($res) {
     </form>
 
     <script src="../Assets/JS/admin-dashboard.js"></script>
+    <script src="../Assets/JS/table-pagination.js"></script>
     <script src="../Assets/JS/complaint-category.js"></script>
 </body>
 </html>
