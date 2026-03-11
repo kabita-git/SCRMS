@@ -6,6 +6,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? $_SESSION['role']
 }
 
 require_once '../Database/db-config.php';
+require_once '../Includes/AutoCategorizer.php';
 
 $message = "";
 $messageType = "";
@@ -14,19 +15,49 @@ $messageType = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = $_SESSION['user_id'];
     $title = isset($_POST['name']) ? trim($_POST['name']) : '';
-    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
     $batch = isset($_POST['batch']) ? trim($_POST['batch']) : '';
     $categoryId = isset($_POST['category']) ? intval($_POST['category']) : 0;
     $description = isset($_POST['description']) ? trim($_POST['description']) : '';
+    $is_anonymous = isset($_POST['is_anonymous']) ? 1 : 0;
     $statusId = 1; // Default to Pending
+
+    // Fetch all categories for algorithm
+    $all_cats = [];
+    $cat_query = $conn->query("SELECT category_id, category_name, description FROM complaint_categories");
+    while ($row = $cat_query->fetch_assoc()) {
+        $all_cats[] = $row;
+    }
+
+    // Run Auto-Categorization Algorithm
+    $categorizer = new AutoCategorizer();
+    $suggestedId = $categorizer->suggestCategory($description . " " . $title, $all_cats);
+    
+    // If the algorithm found a match, use it. Otherwise fall back to user selection.
+    if ($suggestedId !== null) {
+        $categoryId = $suggestedId;
+    }
 
     $conn->begin_transaction();
 
     try {
-        $stmt = $conn->prepare("INSERT INTO complaints (user_id, category_id, status_id, title, description, batch, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+        // Convert DD/MM/YYYY to YYYY-MM-DD
+        $incidentDate = isset($_POST['date']) ? trim($_POST['date']) : '';
+        $formattedDate = null;
+        if (!empty($incidentDate)) {
+            $dateArr = explode('/', $incidentDate);
+            if (count($dateArr) === 3) {
+                // Ensure correct order for MySQL: YYYY-MM-DD (assuming DD/MM/YYYY from UI)
+                $formattedDate = $dateArr[2] . '-' . $dateArr[1] . '-' . $dateArr[0];
+            }
+        }
+
+        // Convert 0/empty to NULL for database if still not set
+        $finalCategoryId = ($categoryId > 0) ? $categoryId : null;
+
+        $stmt = $conn->prepare("INSERT INTO complaints (user_id, category_id, status_id, title, description, batch, is_anonymous, incident_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
         if (!$stmt) throw new Exception($conn->error);
         
-        $stmt->bind_param("iiisss", $userId, $categoryId, $statusId, $title, $description, $batch);
+        $stmt->bind_param("iiisssis", $userId, $finalCategoryId, $statusId, $title, $description, $batch, $is_anonymous, $formattedDate);
         if (!$stmt->execute()) throw new Exception($stmt->error);
         
         $complaintId = $stmt->insert_id;
@@ -37,9 +68,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtAtt = $conn->prepare("INSERT INTO complaint_attachments (complaint_id, file_name, file_type, file_data) VALUES (?, ?, ?, ?)");
             if (!$stmtAtt) throw new Exception($conn->error);
 
+            $allowedExtensions = ['mp4', 'mov', 'mp3', 'aac', 'jpg', 'png', 'pdf', 'wav'];
+
             foreach ($_FILES['evidence']['tmp_name'] as $key => $tmpName) {
                 if ($_FILES['evidence']['error'][$key] === UPLOAD_ERR_OK) {
                     $fileName = $_FILES['evidence']['name'][$key];
+                    $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+                    if (!in_array($fileExt, $allowedExtensions)) {
+                        throw new Exception("File type .$fileExt is not supported. Only .mp4, .mov, .mp3, .AAC, .jpg, .png, .pdf, .wav are allowed.");
+                    }
+
                     $fileType = $_FILES['evidence']['type'][$key];
                     $fileData = file_get_contents($tmpName);
                     
@@ -50,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmtAtt->close();
         }
+
 
         $conn->commit();
         $_SESSION['message'] = "Complaint and evidence submitted successfully!";
@@ -80,6 +120,9 @@ if ($res_cat) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Complaint - Student Complaint System</title>
     <link rel="stylesheet" href="../Assets/css/complaints-submission.css">
+    <!-- Flatpickr for DD/MM/YYYY Datepicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
     <?php include '../Includes/header.php'; ?>
@@ -97,14 +140,13 @@ if ($res_cat) {
                 <?php endif; ?>
 
                 <form id="complaintForm" method="POST" enctype="multipart/form-data">
+                    <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <input type="checkbox" id="is_anonymous" name="is_anonymous" style="width: 24px; height: 24px; cursor: pointer; accent-color: #2D1B69;">
+                        <label for="is_anonymous" style="margin-bottom: 0; cursor: pointer; user-select: none; font-size: 18px; font-weight: 600; color: #1a1a1a;">Submit Anonymously</label>
+                    </div>    
                     <div class="form-group">
                         <label for="name">Title/Subject</label>
                         <input type="text" id="name" name="name" placeholder="Enter Subject....." required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Email<span class="required">*</span></label>
-                        <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($_SESSION['email'] ?? ''); ?>" required>
                     </div>
 
                     <div class="form-group">
@@ -114,16 +156,7 @@ if ($res_cat) {
                             <option value="2024">2024</option>
                             <option value="2025">2025</option>
                             <option value="2026">2026</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="category">Category<span class="required">*</span></label>
-                        <select id="category" name="category" required>
-                            <option value="">Select Category</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
-                            <?php endforeach; ?>
+                            <option value="2026">2027</option>
                         </select>
                     </div>
 
@@ -133,14 +166,33 @@ if ($res_cat) {
                     </div>
 
                     <div class="form-group">
-                        <label for="date">Date<span class="required">*</span></label>
-                        <input type="date" id="date" name="date" required>
+                        <label for="category">Category</label>
+                        <select id="category" name="category">
+                            <option value="">Select Category (Optional)</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Incident Date <span class="required">*</span></label>
+                        <div class="calendar-input-wrapper">
+                            <input type="text" id="date" name="date" placeholder="DD/MM/YYYY" 
+                                   pattern="\d{2}/\d{2}/\d{4}" title="Please use DD/MM/YYYY format" required>
+                            <svg class="calendar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label for="evidence">Supporting Evidence</label>
                         <div class="file-upload">
-                            <input type="file" id="evidence" name="evidence[]" accept="image/*,.pdf,.doc,.docx" multiple>
+                            <input type="file" id="evidence" name="evidence[]" accept=".mp4,.mov,.mp3,.AAC,.jpg,.png,.pdf,.wav" multiple>
                             <label for="evidence" class="file-upload-label">
                                 <span id="fileNameDisplay">Upload Files</span>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -167,6 +219,16 @@ if ($res_cat) {
             <div class="custom-modal-actions">
                 <button type="button" class="modal-btn-cancel" id="fileDeleteCancel">Cancel</button>
                 <button type="button" class="modal-btn-confirm" id="fileDeleteConfirm">Yes, Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Type Alert Modal -->
+    <div id="fileTypeAlertModal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            <h3 id="fileTypeAlertMessage" style="margin-bottom: 20px; color: #dc3545;">Invalid File Type</h3>
+            <div class="custom-modal-actions" style="justify-content: center;">
+                <button type="button" class="modal-btn-cancel" id="fileTypeAlertOk">OK</button>
             </div>
         </div>
     </div>
