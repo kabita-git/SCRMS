@@ -110,66 +110,36 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Ensure Search visually filters the newly PHP generated rows
-    const searchInput = document.getElementById('searchInput');
+    // ── Search + Pagination ─────────────────────────────────────────────────
+    const pager = initTablePagination({
+        tableBodyId    : 'tableBody',
+        entriesSelectId: 'entriesSelect',
+        entriesInfoId  : null,          // category page uses .entries-info class
+        prevBtnId      : 'prevBtn',
+        nextBtnId      : 'nextBtn',
+    });
+
+    // Wire up the .entries-info element manually (no id on this page)
+    function updateCategoryEntriesInfo() {
+        const all = Array.from(document.querySelectorAll('#tableBody tr'))
+            .filter(row => !row.querySelector('td[colspan]'));
+        const visible = all.filter(row => row.dataset.hiddenBySearch !== 'true');
+        const el = document.querySelector('.entries-info');
+        if (el) el.textContent = `Showing 1 to ${visible.length} of ${all.length} entries`;
+    }
+    updateCategoryEntriesInfo();
+
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#tableBody tr');
-            
-            rows.forEach(row => {
-                // If it's the "No categories found" row, skip it
+        searchInput.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('#tableBody tr').forEach(row => {
                 if (row.querySelector('td[colspan]')) return;
-                
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+                const match = row.textContent.toLowerCase().includes(term);
+                row.dataset.hiddenBySearch = match ? 'false' : 'true';
             });
-            
-            updateEntriesInfo();
+            pager.refresh();
+            updateCategoryEntriesInfo();
         });
     }
 
-    // Entries selector implementation mockup
-    const entriesSelect = document.getElementById('entriesSelect');
-    if (entriesSelect) {
-        entriesSelect.addEventListener('change', function() {
-            // alert removed as per user request
-            console.log(`Show ${this.value} entries functionality will be implemented with pagination`);
-        });
-    }
-
-    // Pagination buttons implementation mockup
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    
-    if (prevBtn) {
-        prevBtn.addEventListener('click', function() {
-            // alert removed as per user request
-            console.log('Previous page functionality will be implemented');
-        });
-    }
-    
-    if (nextBtn) {
-        nextBtn.addEventListener('click', function() {
-            // alert removed as per user request
-            console.log('Next page functionality will be implemented');
-        });
-    }
-
-    // Update entries info purely functionally based on visible TR rows
-    function updateEntriesInfo() {
-        const queryRows = Array.from(document.querySelectorAll('#tableBody tr'))
-            .filter(row => !row.querySelector('td[colspan]')); // exclude 'no results'
-        const total = queryRows.length;
-        const visibleRows = queryRows.filter(row => row.style.display !== 'none');
-        const showing = visibleRows.length;
-        
-        const infoEl = document.querySelector('.entries-info');
-        if (infoEl) {
-            infoEl.textContent = `Showing 1 to ${showing} of ${total} entries`;
-        }
-    }
-
-    // Call it initially
-    updateEntriesInfo();
 });

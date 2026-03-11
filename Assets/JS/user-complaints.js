@@ -93,17 +93,79 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === viewModal) closeModal(viewModal);
     });
 
-    // Search functionality
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const searchTerm = this.value.toLowerCase();
-            const rows = tableBody.querySelectorAll('tr');
+    // ── Search + Pagination ─────────────────────────────────────────────────
+    const complaintsTableBody = document.querySelector('#complaintsTable tbody');
 
-            rows.forEach(row => {
-                if (row.cells.length === 1) return; // Skip "No complaints found"
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+    const pager = initTablePagination({
+        tableBodyId    : null,          // we pass the element directly below
+        entriesSelectId: 'entriesPerPage',
+        entriesInfoId  : null,          // info is inside .pagination-info
+        prevBtnId      : null,
+        nextBtnId      : null,
+    });
+
+    // Build a local pagination that works with complaintsTable tbody
+    (function () {
+        const tbody        = document.querySelector('#complaintsTable tbody');
+        const entriesSel   = document.getElementById('entriesPerPage');
+        const infoEl       = document.querySelector('.pagination-info');
+        const prevBtnEl    = document.getElementById('prevComplaints');
+        const nextBtnEl    = document.getElementById('nextComplaints');
+        let currentPage    = 1;
+        let rowsPerPage    = entriesSel ? parseInt(entriesSel.value, 10) : 10;
+
+        function getDataRows() {
+            return Array.from(tbody.querySelectorAll('tr')).filter(r => !r.querySelector('td[colspan]'));
+        }
+        function getVisible() {
+            return getDataRows().filter(r => r.dataset.hiddenBySearch !== 'true');
+        }
+        function render() {
+            const rows = getVisible();
+            const total = rows.length;
+            const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * rowsPerPage;
+            const end   = start + rowsPerPage;
+
+            getDataRows().forEach(r => r.style.display = 'none');
+            rows.forEach((r, i) => { r.style.display = (i >= start && i < end) ? '' : 'none'; });
+
+            if (infoEl) {
+                if (total === 0) {
+                    infoEl.textContent = 'Showing 0 to 0 of 0 entries';
+                } else {
+                    infoEl.textContent = `Showing ${start + 1} to ${Math.min(end, total)} of ${total} entries`;
+                }
+            }
+            const emptyRow = tbody.querySelector('tr td[colspan]')?.closest('tr');
+            if (emptyRow) emptyRow.style.display = total === 0 ? '' : 'none';
+        }
+
+        window._complaintsTableRefresh = function () { currentPage = 1; render(); };
+
+        if (entriesSel) {
+            entriesSel.addEventListener('change', function () {
+                rowsPerPage = parseInt(this.value, 10);
+                currentPage = 1;
+                render();
             });
+        }
+
+        render();
+    })();
+
+    if (searchInput && tableBody) {
+        searchInput.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            tableBody.querySelectorAll('tr').forEach(row => {
+                if (row.querySelector('td[colspan]')) return;
+                const match = row.textContent.toLowerCase().includes(term);
+                row.dataset.hiddenBySearch = match ? 'false' : 'true';
+            });
+            if (window._complaintsTableRefresh) window._complaintsTableRefresh();
         });
     }
+
 });

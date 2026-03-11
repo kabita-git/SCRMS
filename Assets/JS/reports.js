@@ -53,37 +53,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === deleteModal) closeModal(deleteModal);
     });
 
-    // Search functionality
+    // ── Search + Pagination ─────────────────────────────────────────────────
+    const pager = initTablePagination({
+        tableBodyId    : 'tableBody',
+        entriesSelectId: 'entriesSelect',
+        entriesInfoId  : 'entriesInfo',
+        prevBtnId      : 'prevBtn',
+        nextBtnId      : 'nextBtn',
+    });
+
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = tableBody.querySelectorAll('tr');
-            let visibleCount = 0;
-
-            rows.forEach(row => {
-                if (row.cells.length === 1) return; // Skip "No reports found" row
-                
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            if (entriesInfo) {
-                const total = rows.length;
-                entriesInfo.textContent = `Showing ${visibleCount} entries (filtered from ${total})`;
+        searchInput.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            if (tableBody) {
+                tableBody.querySelectorAll('tr').forEach(row => {
+                    if (row.querySelector('td[colspan]')) return;
+                    const match = row.textContent.toLowerCase().includes(term);
+                    row.dataset.hiddenBySearch = match ? 'false' : 'true';
+                });
             }
+            pager.refresh();
         });
     }
 
-    // Pagination/Entries mock-up
-    const entriesSelect = document.getElementById('entriesSelect');
-    if (entriesSelect) {
-        entriesSelect.addEventListener('change', function() {
-            console.log(`Show ${this.value} entries selected`);
-        });
-    }
 });
