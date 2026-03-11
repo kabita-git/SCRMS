@@ -10,7 +10,7 @@ if (logoutTrigger && logoutModal) {
 }
 
 // File upload management
-const fileInput = document.getElementById('evidence');
+const fileInvput = document.getElementById('evidence');
 const fileListContainer = document.getElementById('fileList');
 const fileNameDisplay = document.getElementById('fileNameDisplay');
 

@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const contact = this.getAttribute('data-contact');
             const role = this.getAttribute('data-role');
             const status = this.getAttribute('data-status');
+            const category = this.getAttribute('data-category');
 
             document.getElementById('editUserId').value = id;
             document.getElementById('firstName').value = first;
@@ -48,9 +49,39 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('userRole').value = role;
             document.getElementById('userStatus').value = status;
 
+            // Handle category visibility
+            const categoryGroup = document.getElementById('categoryAssignmentGroup');
+            const categorySelect = document.getElementById('assignedCategory');
+            
+            if (role === 'DeptAdmin') {
+                categoryGroup.style.display = 'block';
+                categorySelect.value = category || "";
+                categorySelect.required = true;
+            } else {
+                categoryGroup.style.display = 'none';
+                categorySelect.value = "";
+                categorySelect.required = false;
+            }
+
             openModal(editModal);
         });
     });
+
+    // Handle role change in modal
+    const userRoleSelect = document.getElementById('userRole');
+    if (userRoleSelect) {
+        userRoleSelect.addEventListener('change', function() {
+            const categoryGroup = document.getElementById('categoryAssignmentGroup');
+            const categorySelect = document.getElementById('assignedCategory');
+            if (this.value === 'DeptAdmin') {
+                categoryGroup.style.display = 'block';
+                categorySelect.required = true;
+            } else {
+                categoryGroup.style.display = 'none';
+                categorySelect.required = false;
+            }
+        });
+    }
 
     modalClose.addEventListener('click', () => closeModal(editModal));
     cancelBtn.addEventListener('click', () => closeModal(editModal));

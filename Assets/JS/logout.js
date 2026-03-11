@@ -33,4 +33,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         });
     }
+
+    // Sidebar Toggle Logic for Mobile
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    if (hamburgerMenu && sidebar && sidebarOverlay) {
+        const toggleSidebar = () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        };
+
+        const closeSidebar = () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // Close sidebar when navigating on mobile (optional but recommended)
+        const navLinks = sidebar.querySelectorAll('.nav-item, .nav-subitem');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    closeSidebar();
+                }
+            });
+        });
+    }
 });

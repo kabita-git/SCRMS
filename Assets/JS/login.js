@@ -130,3 +130,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Google Sign-In Callback
+function handleCredentialResponse(response) {
+    console.log("Encoded JWT ID token: " + response.credential);
+    
+    // Send ID token to backend
+    const formData = new FormData();
+    formData.append('id_token', response.credential);
+
+    fetch('Includes/google-login.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert("Google Sign-In failed: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error("Error during Google Sign-In:", err);
+        alert("An error occurred during Google Sign-In. Please try again.");
+    });
+}

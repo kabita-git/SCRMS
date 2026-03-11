@@ -74,11 +74,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const idInput = categoryForm.querySelector('input[name="categoryId"]');
                     const nameInput = document.getElementById('categoryName');
                     const descInput = document.getElementById('categoryDescription');
+                    const headInput = document.getElementById('deptHeadId');
+                    const headId = btn.getAttribute('data-head-id');
                     
                     if (actionInput) actionInput.value = 'edit';
                     if (idInput) idInput.value = id;
                     if (nameInput) nameInput.value = name;
                     if (descInput) descInput.value = desc;
+                    if (headInput) headInput.value = headId || "";
                 }
                 if (modal) modal.classList.add('active');
             } 
