@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? $_SESSION['role'] ?? '', ['Admin', 'DeptAdmin', 'UpperBody'])) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? $_SESSION['role'] ?? '', ['Admin', 'UpperBody'])) {
     header('Location: /index.php');
     exit;
 }
@@ -43,19 +43,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $_SESSION['message'] = "Invalid input for editing.";
             $_SESSION['messageType'] = "error";
         } else {
-            $stmt = $conn->prepare("UPDATE complaint_categories SET category_name = ?, description = ? WHERE category_id = ?");
-            if ($stmt) {
+            $conn->begin_transaction();
+            try {
+                $stmt = $conn->prepare("UPDATE complaint_categories SET category_name = ?, description = ? WHERE category_id = ?");
                 $stmt->bind_param("ssi", $categoryName, $description, $categoryId);
-                if ($stmt->execute()) {
-                    $_SESSION['message'] = "Category updated successfully!";
-                    $_SESSION['messageType'] = "success";
-                } else {
-                    $_SESSION['message'] = "Database error: " . $conn->error;
-                    $_SESSION['messageType'] = "error";
-                }
+                $stmt->execute();
                 $stmt->close();
-            } else {
-                $_SESSION['message'] = "Database error: " . $conn->error;
+
+                // Handle Dept Head assignment
+                $deptHeadId = isset($_POST['deptHeadId']) ? intval($_POST['deptHeadId']) : 0;
+                
+                // First, unassign whoever was assigned to this category
+                $stmt = $conn->prepare("UPDATE users SET assigned_category = NULL WHERE assigned_category = ?");
+                $stmt->bind_param("i", $categoryId);
+                $stmt->execute();
+                $stmt->close();
+
+                // Then, assign the new head if one was selected
+                if ($deptHeadId > 0) {
+                    $stmt = $conn->prepare("UPDATE users SET assigned_category = ? WHERE user_id = ?");
+                    $stmt->bind_param("ii", $categoryId, $deptHeadId);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+
+                $conn->commit();
+                $_SESSION['message'] = "Category updated successfully!";
+                $_SESSION['messageType'] = "success";
+            } catch (Exception $e) {
+                $conn->rollback();
+                $_SESSION['message'] = "Database error: " . $e->getMessage();
                 $_SESSION['messageType'] = "error";
             }
         }
@@ -96,9 +113,22 @@ if (isset($_SESSION['message'])) {
     unset($_SESSION['messageType']);
 }
 
+// Fetch all DeptAdmins for the dropdown
+$deptAdmins = [];
+$res_heads = $conn->query("SELECT user_id, first_name, last_name FROM users WHERE role = 'DeptAdmin' AND status = 'Active' ORDER BY first_name ASC");
+if ($res_heads) {
+    while ($row = $res_heads->fetch_assoc()) {
+        $deptAdmins[] = $row;
+    }
+}
+
 // Fetch Categories for the Table
 $categories = [];
-$res = $conn->query("SELECT * FROM complaint_categories ORDER BY category_name ASC");
+$sql = "SELECT c.*, u.user_id as head_id, u.first_name, u.last_name 
+        FROM complaint_categories c 
+        LEFT JOIN users u ON u.assigned_category = c.category_id AND u.role = 'DeptAdmin'
+        ORDER BY c.category_name ASC";
+$res = $conn->query($sql);
 if ($res) {
     while ($row = $res->fetch_assoc()) {
         $categories[] = $row;
@@ -162,6 +192,7 @@ if ($res) {
                             <tr>
                                 <th>Complaint Category</th>
                                 <th>Description</th>
+                                <th>Dept Head</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -175,8 +206,21 @@ if ($res) {
                                                 <?php echo htmlspecialchars($cat['description']); ?>
                                             </div>
                                         </td>
+                                        <td>
+                                            <?php 
+                                                if ($cat['head_id']) {
+                                                    echo htmlspecialchars($cat['first_name'] . ' ' . $cat['last_name']);
+                                                } else {
+                                                    echo '<span style="color: #999; font-style: italic;">Not Assigned</span>';
+                                                }
+                                            ?>
+                                        </td>
                                         <td class="action-btns">
-                                            <button class="edit-btn" title="Edit" data-id="<?php echo $cat['category_id']; ?>" data-name="<?php echo htmlspecialchars($cat['category_name']); ?>" data-desc="<?php echo htmlspecialchars($cat['description']); ?>">
+                                            <button class="edit-btn" title="Edit" 
+                                                    data-id="<?php echo $cat['category_id']; ?>" 
+                                                    data-name="<?php echo htmlspecialchars($cat['category_name']); ?>" 
+                                                    data-desc="<?php echo htmlspecialchars($cat['description']); ?>"
+                                                    data-head-id="<?php echo $cat['head_id'] ?? ''; ?>">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -214,7 +258,7 @@ if ($res) {
     </div>
 
     <!-- Add/Edit Category Modal -->
-    <div class="modal" id="categoryModal">
+    <div class="modal" id="categoryModal" style="z-index: 99999;">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="modalTitle">Add Category</h3>
@@ -231,6 +275,15 @@ if ($res) {
                     <label>Description <span class="required">*</span></label>
                     <textarea id="categoryDescription" name="categoryDescription" placeholder="Enter description" rows="4" required></textarea>
                 </div>
+                <div class="form-group" id="deptHeadGroup">
+                    <label>Assigned Dept Head</label>
+                    <select name="deptHeadId" id="deptHeadId">
+                        <option value="">-- Select Dept Admin --</option>
+                        <?php foreach ($deptAdmins as $admin): ?>
+                            <option value="<?php echo $admin['user_id']; ?>"><?php echo htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" id="cancelBtn">Close</button>
                     <button type="submit" class="btn-primary">Save</button>
@@ -240,7 +293,7 @@ if ($res) {
     </div>
 
     <!-- Custom Delete Confirmation Modal -->
-    <div id="deleteModal" class="custom-modal-overlay">
+    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
         <div class="custom-modal-box">
             <h3 id="deleteMessage">Are you sure you want to delete this category?</h3>
             <div class="custom-modal-actions" id="deleteActions">
