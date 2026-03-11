@@ -85,8 +85,9 @@ if ($stmt) {
                 </div>
 
                 <div class="info-card green">
-                    <div class="card-label" style="font-size: 28px; font-weight: bold; margin-bottom: 15px;"><?php echo htmlspecialchars($latestTitle); ?></div>
-                    <div class="card-label" style="font-size: 18px; margin-bottom: 25px;"><?php echo htmlspecialchars($latestStatus); ?></div>
+                    <div class="card-label" style="font-size: 24px; font-weight: bold; margin-bottom: 10px;"><?php echo htmlspecialchars($latestTitle); ?></div>
+                    <div class="card-label" style="font-size: 16px; margin-bottom: 5px; opacity: 0.8;"><?php echo htmlspecialchars($latestStatus); ?></div>
+                    <div class="card-label" style="font-size: 13px; font-style: italic; margin-bottom: 20px; opacity: 0.7; height: 40px; overflow: hidden;"><?php echo htmlspecialchars($latestMessage ?? '---'); ?></div>
                     <button class="more-info-btn" onclick="window.location.href='user-complaints.php'">
                         More info
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

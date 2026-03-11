@@ -70,11 +70,14 @@ $display_role = htmlspecialchars(ucfirst($role ?? '')); ?>
                         </svg>
                     </a>
                     <div class="nav-dropdown" id="complaintsDropdown">
-                        <a href="../Admin/complaint-category.php" class="nav-subitem <?php echo ($current_page == 'complaint-category.php') ? 'active' : ''; ?>">Category</a>
+                        <?php if ($role !== 'DeptAdmin'): ?>
+                            <a href="../Admin/complaint-category.php" class="nav-subitem <?php echo ($current_page == 'complaint-category.php') ? 'active' : ''; ?>">Category</a>
+                        <?php endif; ?>
                         <a href="../Admin/complaint-management.php" class="nav-subitem <?php echo ($current_page == 'complaint-management.php') ? 'active' : ''; ?>">Management</a>
                     </div>
                 </div>
 
+                <?php if ($role !== 'DeptAdmin'): ?>
                 <a href="../Admin/user-management.php" class="nav-item <?php echo ($current_page == 'user-management.php') ? 'active' : ''; ?>">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -95,6 +98,7 @@ $display_role = htmlspecialchars(ucfirst($role ?? '')); ?>
                     </svg>
                     Reports
                 </a>
+                <?php endif; ?>
             <?php else: ?>
                 <a href="../User/user-dashboard.php" class="nav-item <?php echo ($current_page == 'user-dashboard.php') ? 'active' : ''; ?>">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

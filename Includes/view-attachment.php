@@ -19,9 +19,9 @@ if (isset($_GET['id'])) {
         if ($stmt->num_rows > 0) {
             $stmt->bind_result($fileName, $fileType, $fileData);
             $stmt->fetch();
-            
+            $disposition = isset($_GET['download']) ? "attachment" : "inline";
             header("Content-Type: " . $fileType);
-            header("Content-Disposition: inline; filename=\"" . $fileName . "\"");
+            header("Content-Disposition: " . $disposition . "; filename=\"" . $fileName . "\"");
             echo $fileData;
             exit;
         }

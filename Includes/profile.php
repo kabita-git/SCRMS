@@ -21,7 +21,7 @@ $passwordCooldown = max(0, (int)(($_SESSION['last_password_change'] ?? 0) + PASS
 
 // ── Fetch user data ────────────────────────────────────────────────────────
 $user = [];
-$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, email, contact, role, status, created_at FROM users WHERE user_id = ?");
+$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, email, contact, batch, program, role, status, created_at FROM users WHERE user_id = ?");
 if ($stmt) {
     $stmt->bind_param("i", $userId);
     $stmt->execute();
@@ -42,9 +42,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $last    = trim($_POST['last_name']   ?? '');
             $contact = trim($_POST['contact']     ?? '');
 
-            $stmt = $conn->prepare("UPDATE users SET first_name=?, middle_name=?, last_name=?, contact=? WHERE user_id=?");
-            if ($stmt) {
+            if ($user['role'] === 'User') {
+                $batch   = trim($_POST['batch']       ?? '');
+                $program = trim($_POST['program']     ?? '');
+                $stmt = $conn->prepare("UPDATE users SET first_name=?, middle_name=?, last_name=?, contact=?, batch=?, program=? WHERE user_id=?");
+                $stmt->bind_param("ssssssi", $first, $middle, $last, $contact, $batch, $program, $userId);
+            } else {
+                $stmt = $conn->prepare("UPDATE users SET first_name=?, middle_name=?, last_name=?, contact=? WHERE user_id=?");
                 $stmt->bind_param("ssssi", $first, $middle, $last, $contact, $userId);
+            }
+
+            if ($stmt) {
                 if ($stmt->execute()) {
                     $_SESSION['first_name']  = $first;
                     $_SESSION['middle_name'] = $middle;
@@ -57,6 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         'middle_name' => $middle,
                         'last_name'   => $last,
                         'contact'     => $contact,
+                        'batch'       => $batch,
+                        'program'     => $program,
                     ]);
                     $message     = "Profile updated successfully!";
                     $messageType = "success";
@@ -248,6 +258,35 @@ $activeTab = (isset($_POST['action']) && $_POST['action'] === 'change_password')
                                 <input type="text" name="contact" value="<?php echo htmlspecialchars($user['contact'] ?? ''); ?>" <?php echo $profileCooldown > 0 ? 'readonly' : ''; ?>>
                             </div>
                         </div>
+
+                        <?php if ($user['role'] === 'User'): ?>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                            <div class="form-group">
+                                <label>Batch</label>
+                                <select name="batch" <?php echo $profileCooldown > 0 ? 'disabled' : 'required'; ?> style="width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px;">
+                                    <?php 
+                                        $batches = ['2023', '2024', '2025', '2026', '2027'];
+                                        foreach($batches as $b) {
+                                            $sel = ($user['batch'] == $b) ? 'selected' : '';
+                                            echo "<option value='$b' $sel>$b</option>";
+                                        }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Program</label>
+                                <select name="program" <?php echo $profileCooldown > 0 ? 'disabled' : 'required'; ?> style="width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px;">
+                                    <?php 
+                                        $progs = ["B.Tech.Ed.IT & BIT", "B. Tech.Ed. in Civil", "BA.BED.TESOL", "BED in TCSOL", "B. Mathmatics Education"];
+                                        foreach($progs as $p) {
+                                            $sel = ($user['program'] == $p) ? 'selected' : '';
+                                            echo "<option value='$p' $sel>$p</option>";
+                                        }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         
                         <div style="margin-top: 30px; display: flex; align-items: center; gap: 15px; justify-content: flex-end;">
                             <?php if ($profileCooldown > 0): ?>
