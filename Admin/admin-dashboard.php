@@ -8,6 +8,17 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? $_SESSIO
 
 include_once '../Database/db-config.php';
 
+// Fetch current user info for DeptAdmin filtering
+$assigned_category = null;
+if (($_SESSION['user_role'] ?? $_SESSION['role'] ?? '') === 'DeptAdmin') {
+    $stmt = $conn->prepare("SELECT assigned_category FROM users WHERE user_id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->bind_result($assigned_category);
+    $stmt->fetch();
+    $stmt->close();
+}
+
 // Fetch Total Users
 $total_users = 0;
 $res_users = $conn->query("SELECT COUNT(*) as count FROM users");
@@ -17,7 +28,11 @@ if ($res_users && $row = $res_users->fetch_assoc()) {
 
 // Fetch Total Complaints
 $total_complaints = 0;
-$res_comp = $conn->query("SELECT COUNT(*) as count FROM complaints");
+$comp_where = "";
+if (($_SESSION['user_role'] ?? $_SESSION['role'] ?? '') === 'DeptAdmin') {
+    $comp_where = " WHERE category_id = " . ($assigned_category !== null ? intval($assigned_category) : -1);
+}
+$res_comp = $conn->query("SELECT COUNT(*) as count FROM complaints" . $comp_where);
 if ($res_comp && $row = $res_comp->fetch_assoc()) {
     $total_complaints = $row['count'];
 }
@@ -25,7 +40,11 @@ if ($res_comp && $row = $res_comp->fetch_assoc()) {
 // Fetch Solved Complaints
 $solved_complaints = 0;
 // Note: using complaint_statuses as specified in the schema
-$res_solved = $conn->query("SELECT COUNT(*) as count FROM complaints c JOIN complaint_statuses s ON c.status_id = s.status_id WHERE s.status_label = 'Solved'");
+$solved_where = " WHERE s.status_label = 'Solved'";
+if (($_SESSION['user_role'] ?? $_SESSION['role'] ?? '') === 'DeptAdmin') {
+    $solved_where .= " AND c.category_id = " . ($assigned_category !== null ? intval($assigned_category) : -1);
+}
+$res_solved = $conn->query("SELECT COUNT(*) as count FROM complaints c JOIN complaint_statuses s ON c.status_id = s.status_id" . $solved_where);
 if ($res_solved && $row = $res_solved->fetch_assoc()) {
     $solved_complaints = $row['count'];
 }
@@ -75,7 +94,8 @@ $last = htmlspecialchars($_SESSION['last_name'] ?? '');
                     </button>
                 </div>
 
-                <!-- Total Users Card -->
+                <!-- Total Users Card - Hidden for DeptAdmin -->
+                <?php if (($_SESSION['user_role'] ?? $_SESSION['role'] ?? '') !== 'DeptAdmin'): ?>
                 <div class="stat-card stat-card-green">
                     <div class="stat-icon">
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -98,6 +118,7 @@ $last = htmlspecialchars($_SESSION['last_name'] ?? '');
                         </svg>
                     </button>
                 </div>
+                <?php endif; ?>
 
                 <!-- Complaints Solved Card -->
                 <div class="stat-card stat-card-orange">
