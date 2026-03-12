@@ -1,17 +1,7 @@
 // Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Complaints Dropdown Toggle
-    const complaintsToggle = document.getElementById('complaintsToggle');
-    const complaintsDropdown = document.getElementById('complaintsDropdown');
-    
-    if (complaintsToggle) {
-        complaintsToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            complaintsDropdown.classList.toggle('active');
-            complaintsToggle.classList.toggle('active');
-        });
-    }
+    // Dropdown toggles removed as links are now flat
 
 
 
@@ -35,7 +25,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add animation to stats on page load
     animateStats();
+    animateBars();
 });
+
+// Animate category bars
+function animateBars() {
+    const bars = document.querySelectorAll('.progress-fill');
+    setTimeout(() => {
+        bars.forEach(bar => {
+            const width = bar.getAttribute('data-width');
+            bar.style.width = width;
+        });
+    }, 300);
+}
 
 // Animate stat numbers on page load
 function animateStats() {
