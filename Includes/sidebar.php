@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 include_once __DIR__ . '/../Database/db-config.php';
 
 $user_id   = $_SESSION['user_id'] ?? null;
-$role = $_SESSION['role'] ?? null;
+$role = $_SESSION['role'] ?? $_SESSION['user_role'] ?? null;
 $first     = htmlspecialchars($_SESSION['first_name'] ?? '');
 $middle    = htmlspecialchars($_SESSION['middle_name'] ?? '');
 $last      = htmlspecialchars($_SESSION['last_name'] ?? '');
@@ -48,7 +48,7 @@ $display_role = htmlspecialchars(ucfirst($role ?? '')); ?>
         </div>
 
         <nav class="sidebar-nav">
-            <?php if (in_array($role, ['Admin', 'DeptAdmin', 'UpperBody'])): ?>
+            <?php if (in_array($role, ['Admin', 'DeptAdmin', 'UpperBody', 'Coordinator', 'HOD', 'Dean'])): ?>
                 <a href="../Admin/admin-dashboard.php" class="nav-item <?php echo ($current_page == 'admin-dashboard.php') ? 'active' : ''; ?>">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7" rx="1"></rect>
@@ -59,25 +59,23 @@ $display_role = htmlspecialchars(ucfirst($role ?? '')); ?>
                     Dashboard
                 </a>
 
-                <div class="nav-item-group">
-                    <a href="#" class="nav-item" id="complaintsToggle">
+                <?php if (!in_array($role, ['DeptAdmin', 'Coordinator', 'HOD', 'Dean'])): ?>
+                    <a href="../Admin/complaint-category.php" class="nav-item <?php echo ($current_page == 'complaint-category.php') ? 'active' : ''; ?>">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
-                        Complaints
-                        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
+                        Complaint Category
                     </a>
-                    <div class="nav-dropdown" id="complaintsDropdown">
-                        <?php if ($role !== 'DeptAdmin'): ?>
-                            <a href="../Admin/complaint-category.php" class="nav-subitem <?php echo ($current_page == 'complaint-category.php') ? 'active' : ''; ?>">Category</a>
-                        <?php endif; ?>
-                        <a href="../Admin/complaint-management.php" class="nav-subitem <?php echo ($current_page == 'complaint-management.php') ? 'active' : ''; ?>">Management</a>
-                    </div>
-                </div>
+                <?php endif; ?>
 
-                <?php if ($role !== 'DeptAdmin'): ?>
+                <a href="../Admin/complaint-management.php" class="nav-item <?php echo ($current_page == 'complaint-management.php') ? 'active' : ''; ?>">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Complaint Management
+                </a>
+
+                <?php if (!in_array($role, ['DeptAdmin', 'Coordinator', 'HOD', 'Dean'])): ?>
                 <a href="../Admin/user-management.php" class="nav-item <?php echo ($current_page == 'user-management.php') ? 'active' : ''; ?>">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>

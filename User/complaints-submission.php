@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Run Auto-Categorization Algorithm
     $categorizer = new AutoCategorizer();
     $suggestedId = $categorizer->suggestCategory($description . " " . $title, $all_cats);
-    
+
     // If the algorithm found a match, use it. Otherwise fall back to user selection.
     if ($suggestedId !== null) {
         $categoryId = $suggestedId;
@@ -55,20 +55,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $finalCategoryId = ($categoryId > 0) ? $categoryId : null;
 
         $stmt = $conn->prepare("INSERT INTO complaints (user_id, category_id, status_id, title, description, batch, is_anonymous, incident_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-        if (!$stmt) throw new Exception($conn->error);
-        
+        if (!$stmt)
+            throw new Exception($conn->error);
+
         $stmt->bind_param("iiisssis", $userId, $finalCategoryId, $statusId, $title, $description, $batch, $is_anonymous, $formattedDate);
-        if (!$stmt->execute()) throw new Exception($stmt->error);
-        
+        if (!$stmt->execute())
+            throw new Exception($stmt->error);
+
         $complaintId = $stmt->insert_id;
         $stmt->close();
 
         // Handle multiple file uploads as BLOBs
         if (isset($_FILES['evidence'])) {
             $stmtAtt = $conn->prepare("INSERT INTO complaint_attachments (complaint_id, file_name, file_type, file_data) VALUES (?, ?, ?, ?)");
-            if (!$stmtAtt) throw new Exception($conn->error);
+            if (!$stmtAtt)
+                throw new Exception($conn->error);
 
-            $allowedExtensions = ['mp4', 'mov', 'mp3', 'aac', 'jpg', 'png', 'pdf', 'wav'];
+            $allowedExtensions = ['jpg', 'png', 'gif', 'mp4', 'avi', 'mov', 'mp3', 'wav', 'aac', 'docx', 'pdf', 'txt'];
 
             foreach ($_FILES['evidence']['tmp_name'] as $key => $tmpName) {
                 if ($_FILES['evidence']['error'][$key] === UPLOAD_ERR_OK) {
@@ -76,15 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
                     if (!in_array($fileExt, $allowedExtensions)) {
-                        throw new Exception("File type .$fileExt is not supported. Only .mp4, .mov, .mp3, .AAC, .jpg, .png, .pdf, .wav are allowed.");
+                        throw new Exception("File type .$fileExt is not supported. Only .jpg, .png, .gif, .mp4, .avi, .mov, .mp3, .wav, .aac, .docx, .pdf, .txt are allowed.");
                     }
 
                     $fileType = $_FILES['evidence']['type'][$key];
                     $fileData = file_get_contents($tmpName);
-                    
+
                     $stmtAtt->bind_param("isss", $complaintId, $fileName, $fileType, $fileData);
                     $stmtAtt->send_long_data(3, $fileData); // Send BLOB data
-                    if (!$stmtAtt->execute()) throw new Exception($stmtAtt->error);
+                    if (!$stmtAtt->execute())
+                        throw new Exception($stmtAtt->error);
                 }
             }
             $stmtAtt->close();
@@ -97,7 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: user-complaints.php");
         exit;
 
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         $conn->rollback();
         $message = "Error submitting complaint: " . $e->getMessage();
         $messageType = "error";
@@ -137,13 +142,10 @@ if ($res_cat) {
                     <div class="alert alert-<?php echo $messageType; ?>" style="padding: 15px; margin-bottom: 20px; border-radius: 5px; color: white; background-color: <?php echo $messageType === 'success' ? '#2ecc71' : '#e74c3c'; ?>;">
                         <?php echo htmlspecialchars($message); ?>
                     </div>
-                <?php endif; ?>
+                <?php
+endif; ?>
 
                 <form id="complaintForm" method="POST" enctype="multipart/form-data">
-                    <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
-                        <input type="checkbox" id="is_anonymous" name="is_anonymous" style="width: 24px; height: 24px; cursor: pointer; accent-color: #2D1B69;">
-                        <label for="is_anonymous" style="margin-bottom: 0; cursor: pointer; user-select: none; font-size: 18px; font-weight: 600; color: #1a1a1a;">Submit Anonymously</label>
-                    </div>    
                     <div class="form-group">
                         <label for="name">Title/Subject</label>
                         <input type="text" id="name" name="name" placeholder="Enter Subject....." required>
@@ -152,11 +154,12 @@ if ($res_cat) {
                     <div class="form-group">
                         <label for="batch">Batch<span class="required">*</span></label>
                         <select id="batch" name="batch" required>
+                            <option value="">Select Batch</option>
                             <option value="2023">2023</option>
                             <option value="2024">2024</option>
                             <option value="2025">2025</option>
                             <option value="2026">2026</option>
-                            <option value="2026">2027</option>
+                            <option value="2027">2027</option>
                         </select>
                     </div>
 
@@ -168,10 +171,11 @@ if ($res_cat) {
                     <div class="form-group">
                         <label for="category">Category</label>
                         <select id="category" name="category">
-                            <option value="">Select Category (Optional)</option>
+                            <option value="">Select Category</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
-                            <?php endforeach; ?>
+                            <?php
+endforeach; ?>
                         </select>
                     </div>
 
@@ -192,7 +196,7 @@ if ($res_cat) {
                     <div class="form-group">
                         <label for="evidence">Supporting Evidence</label>
                         <div class="file-upload">
-                            <input type="file" id="evidence" name="evidence[]" accept=".mp4,.mov,.mp3,.AAC,.jpg,.png,.pdf,.wav" multiple>
+                            <input type="file" id="evidence" name="evidence[]" accept=".jpg,.png,.gif,.mp4,.avi,.mov,.mp3,.wav,.aac,.docx,.pdf,.txt" multiple>
                             <label for="evidence" class="file-upload-label">
                                 <span id="fileNameDisplay">Upload Files</span>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -202,7 +206,10 @@ if ($res_cat) {
                         </div>
                         <div id="fileList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;"></div>
                     </div>
-
+                    <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <input type="checkbox" id="is_anonymous" name="is_anonymous" style="width: 24px; height: 24px; cursor: pointer; accent-color: #2D1B69;">
+                        <label for="is_anonymous" style="margin-bottom: 0; cursor: pointer; user-select: none; font-size: 18px; font-weight: 600; color: #1a1a1a;">Submit Anonymously</label>
+                    </div>    
                     <div class="button-group">
                         <button type="reset" class="reset-btn">Reset</button>
                         <button type="submit" class="submit-btn">Submit</button>

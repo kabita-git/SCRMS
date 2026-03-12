@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_token'])) {
         $_SESSION['user_role'] = $user['role'];
         $_SESSION['contact'] = $user['contact'];
 
-        $redirect = in_array($user['role'], ['Admin', 'DeptAdmin', 'UpperBody']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
+        $redirect = in_array($user['role'], ['Admin', 'DeptAdmin', 'UpperBody', 'Coordinator', 'HOD', 'Dean']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
 
         echo json_encode(['success' => true, 'redirect' => $redirect]);
         $stmt->close();

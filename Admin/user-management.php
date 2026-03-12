@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $userId = isset($_POST['userId']) ? intval($_POST['userId']) : 0;
     if ($action === 'update_user') {
         $role = isset($_POST['role']) ? trim($_POST['role']) : '';
-        $assignedCategory = isset($_POST['assignedCategory']) && $_POST['role'] === 'DeptAdmin' ? intval($_POST['assignedCategory']) : null;
+        $escRoles = ['DeptAdmin', 'Coordinator', 'HOD', 'Dean'];
+        $assignedCategory = isset($_POST['assignedCategory']) && in_array($role, $escRoles) ? intval($_POST['assignedCategory']) : null;
 
         $stmt = $conn->prepare("UPDATE users SET role = ?, assigned_category = ? WHERE user_id = ?");
         if ($stmt) {
@@ -172,13 +173,15 @@ if ($res_users) {
                                         <td>
                                             <?php 
                                                 echo htmlspecialchars($u['role']); 
-                                                if ($u['role'] === 'DeptAdmin' && $u['category_name']) {
-                                                    echo ' <small style="display:block; color:#666;">(' . htmlspecialchars($u['category_name']) . ')</small>';
+                                                $escRoles = ['DeptAdmin', 'Coordinator', 'HOD', 'Dean'];
+                                                if (in_array($u['role'], $escRoles) && $u['category_name']) {
+                                                    echo ' <small style="color:#666;">(' . htmlspecialchars($u['category_name']) . ')</small>';
                                                 }
                                             ?>
                                         </td>
                                         <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($displayStatus); ?></span></td>
-                                        <td class="action-btns">
+                                        <td>
+                                            <div class="action-btns">
                                             <button class="edit-btn" title="Edit" 
                                                     data-id="<?php echo $u['user_id']; ?>"
                                                     data-first="<?php echo htmlspecialchars($u['first_name']); ?>"
@@ -202,6 +205,7 @@ if ($res_users) {
                                                     </svg>
                                                 </button>
                                             <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -263,22 +267,15 @@ if ($res_users) {
                                 <option value="User">User</option>
                                 <option value="Admin">Admin</option>
                                 <option value="DeptAdmin">DeptAdmin</option>
-                                <option value="UpperBody">UpperBody</option>
+                                <option value="Coordinator">Coordinator</option>
+                                <option value="HOD">HOD</option>
+                                <option value="Dean">Dean</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label>Status</label>
                             <input type="text" id="userStatus" readonly style="background-color: #f9fafb; cursor: not-allowed;">
                         </div>
-                    </div>
-                    <div class="form-group" id="categoryAssignmentGroup" style="display: none; margin-top: 15px;">
-                        <label>Assign Complaint Category (For DeptAdmin) <span class="required">*</span></label>
-                        <select name="assignedCategory" id="assignedCategory">
-                            <option value="">Select Category</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?php echo $cat['category_id']; ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -113,18 +113,44 @@
 }
 
 .data-table th {
-    padding: 15px;
+    padding: 14px 15px;
     text-align: left;
     font-weight: 600;
     color: #1a1a1a;
     border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+/* Column width distribution */
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+    width: 20%;
+    min-width: 140px;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+    width: 45%;
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+    width: 20%;
+    min-width: 130px;
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+    width: 15%;
+    min-width: 100px;
+    text-align: center;
 }
 
 .data-table td {
-    padding: 15px;
+    padding: 14px 15px;
     border-bottom: 1px solid #e5e7eb;
     color: #4b5563;
-    /* Removed fixed max-width for dynamic fitting */
+    vertical-align: middle;
 }
 
 .data-table tbody tr {
@@ -223,27 +249,32 @@
     cursor: not-allowed;
 }
 
-/* Description column — constrained width so it doesn't dominate the table */
+/* Description column */
 .data-table td.desc-cell {
-    max-width: 320px;
-    width: 320px;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
-/* Text Truncation — clamp to 3 lines with ellipsis */
+/* Text Truncation — clamp to 2 lines with ellipsis */
 .text-truncate {
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     word-break: break-word;
-    line-height: 1.55;
-    max-height: calc(1.55em * 3);   /* fallback for older browsers */
+    line-height: 1.5;
     color: #4b5563;
     font-size: 13.5px;
     cursor: default;
+}
+
+/* Actions column — center the buttons */
+.action-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Responsive Design */

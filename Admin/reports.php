@@ -1,11 +1,14 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? $_SESSION['role'] ?? '', ['Admin', 'UpperBody'])) {
+$role = $_SESSION['user_role'] ?? $_SESSION['role'] ?? '';
+if (!isset($_SESSION['user_id']) || !in_array($role, ['Admin', 'UpperBody', 'Coordinator', 'HOD', 'Dean'])) {
     header('Location: /index.php');
     exit;
 }
 
 require_once '../Database/db-config.php';
+require_once '../Includes/AutoEscalator.php';
+AutoEscalator::runEscalation($conn);
 
 $message = "";
 $messageType = "";
@@ -14,7 +17,7 @@ $messageType = "";
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'get_attachments') {
     $complaintId = isset($_GET['complaintId']) ? intval($_GET['complaintId']) : 0;
     $attachments = [];
-    $stmt = $conn->prepare("SELECT attachment_id, file_name FROM complaint_attachments WHERE complaint_id = ?");
+    $stmt = $conn->prepare("SELECT attachment_id, file_name, file_type FROM complaint_attachments WHERE complaint_id = ?");
     if ($stmt) {
         $stmt->bind_param("i", $complaintId);
         $stmt->execute();
@@ -24,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
         }
         $stmt->close();
     }
+    header('Content-Type: application/json');
     echo json_encode($attachments);
     exit;
 }
@@ -61,29 +65,42 @@ if (isset($_SESSION['message'])) {
     unset($_SESSION['messageType']);
 }
 
-// Fetch reports data
+// Fetch current user info for Dept-specific filtering
+$assigned_category = null;
+$departmental_roles = ['DeptAdmin', 'Coordinator', 'HOD', 'Dean'];
+if (in_array($role, $departmental_roles)) {
+    $stmt = $conn->prepare("SELECT assigned_category FROM users WHERE user_id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->bind_result($assigned_category);
+    $stmt->fetch();
+    $stmt->close();
+}
+
+// Fetch reports data with all requested fields
 $reports = [];
-$sql = "SELECT c.*, cat.category_name, s.status_label, u.first_name, u.middle_name, u.last_name, u.email 
+$whereClause = "";
+if (in_array($role, $departmental_roles)) {
+    $whereClause = "WHERE c.assigned_role = '$role'";
+    if ($assigned_category !== null) {
+        $assigned_category_sql = intval($assigned_category);
+        $whereClause .= " AND c.category_id = $assigned_category_sql";
+    }
+}
+
+$sql = "SELECT c.*, cat.category_name, s.status_label, 
+               u.first_name, u.last_name, u.email,
+               dept_head.first_name as assign_first, dept_head.last_name as assign_last
         FROM complaints c
         LEFT JOIN complaint_categories cat ON c.category_id = cat.category_id
-        LEFT JOIN users u ON c.user_id = u.user_id
         LEFT JOIN complaint_statuses s ON c.status_id = s.status_id
+        LEFT JOIN users u ON c.user_id = u.user_id
+        LEFT JOIN users dept_head ON dept_head.assigned_category = c.category_id AND dept_head.role = 'DeptAdmin'
+        $whereClause
         ORDER BY c.created_at DESC";
 $res = $conn->query($sql);
 if ($res) {
     while ($row = $res->fetch_assoc()) {
-        // Fetch specific attachments for each complaint
-        $compId = $row['complaint_id'];
-        $row['attachments'] = [];
-        $attStmt = $conn->prepare("SELECT attachment_id, file_name FROM complaint_attachments WHERE complaint_id = ?");
-        $attStmt->bind_param("i", $compId);
-        $attStmt->execute();
-        $attRes = $attStmt->get_result();
-        while ($attRow = $attRes->fetch_assoc()) {
-            $row['attachments'][] = $attRow;
-        }
-        $attStmt->close();
-        
         $reports[] = $row;
     }
 }
@@ -95,14 +112,18 @@ if ($res) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports - Complaint System</title>
     <link rel="stylesheet" href="../Assets/Css/admin-dashboard.css">
-    <link rel="stylesheet" href="../Assets/Css/complaint-category.css">
+    <link rel="stylesheet" href="../Assets/Css/complaint-management.css">
     <link rel="stylesheet" href="../Assets/Css/user-management.css">
     <style>
-        .description-text {
-            max-width: 200px;
+        .data-table th, .data-table td {
             white-space: nowrap;
+            font-size: 13px;
+        }
+        .truncate-text {
+            max-width: 150px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -125,7 +146,7 @@ if ($res) {
             <!-- Data Table Card -->
             <div class="table-card">
                 <div class="table-header">
-                    <h3 class="table-title">Reports Table</h3>
+                    <h3 class="table-title">Complaints Report</h3>
                 </div>
 
                 <!-- Table Controls -->
@@ -153,51 +174,75 @@ if ($res) {
                         <thead>
                             <tr>
                                 <th>SN</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Batch</th>
                                 <th>Category</th>
-                                <th>Description</th>
-                                <th>Date</th>
-                                <th>File</th>
+                                <th>Status</th>
+                                <th>Title</th>
+                                <th>Anonymous</th>
+                                <th>Assigned To</th>
+                                <th>Current Level</th>
+                                <th>Created At</th>
+                                <th>Updated At</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
                             <?php if (empty($reports)): ?>
                                 <tr>
-                                    <td colspan="9" style="text-align: center;">No reports found.</td>
+                                    <td colspan="10" style="text-align: center;">No reports found.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($reports as $index => $r): ?>
-                                    <?php 
-                                        $fullName = trim($r['first_name'] . ' ' . $r['middle_name'] . ' ' . $r['last_name']);
-                                        $date = date('d/m/Y', strtotime($r['created_at']));
-                                    ?>
                                     <tr>
                                         <td><?php echo $index + 1; ?></td>
-                                        <td><?php echo htmlspecialchars($fullName); ?></td>
-                                        <td><?php echo htmlspecialchars($r['email'] ?? 'N/A'); ?></td>
-                                        <td><?php echo htmlspecialchars($r['batch'] ?? 'N/A'); ?></td>
-                                        <td><?php echo htmlspecialchars($r['category_name'] ?? 'Other'); ?></td>
-                                        <td class="description-text" title="<?php echo htmlspecialchars($r['description']); ?>">
-                                            <?php echo htmlspecialchars($r['description']); ?>
-                                        </td>
-                                        <td><?php echo $date; ?></td>
+                                        <td><?php echo htmlspecialchars($r['category_name'] ?? 'N/A'); ?></td>
                                         <td>
-                                            <?php if (!empty($r['attachments'])): ?>
-                                                <div style="display: flex; flex-direction: column; gap: 2px;">
-                                                    <?php foreach ($r['attachments'] as $att): ?>
-                                                        <a href="../Includes/view-attachment.php?id=<?php echo $att['attachment_id']; ?>" target="_blank" class="file-link" style="font-size: 11px;">
-                                                            <?php echo htmlspecialchars($att['file_name']); ?>
-                                                        </a>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php else: ?>
-                                                No File
-                                            <?php endif; ?>
+                                            <?php 
+                                                $statusClass = 'status-pending';
+                                                if ($r['status_label'] === 'Solved') $statusClass = 'status-solved';
+                                                elseif ($r['status_label'] === 'In Progress') $statusClass = 'status-progress';
+                                                elseif ($r['status_label'] === 'Unresolved') $statusClass = 'status-unresolved';
+                                            ?>
+                                            <span class="status-badge <?php echo $statusClass; ?>">
+                                                <?php echo htmlspecialchars($r['status_label'] ?? 'Pending'); ?>
+                                            </span>
                                         </td>
+                                        <td class="truncate-text" title="<?php echo htmlspecialchars($r['title']); ?>">
+                                            <?php echo htmlspecialchars($r['title']); ?>
+                                        </td>
+                                        <td><?php echo $r['is_anonymous'] ? 'Yes' : 'No'; ?></td>
+                                        <td>
+                                            <?php 
+                                                if ($r['assign_first']) echo htmlspecialchars($r['assign_first'] . ' ' . $r['assign_last']);
+                                                else echo '<span style="color: #999;">Not Assigned</span>';
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 600; color: #4b5563;">
+                                                <?php echo htmlspecialchars($r['assigned_role'] ?? 'DeptAdmin'); ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo date('d/m/Y H:i', strtotime($r['created_at'])); ?></td>
+                                        <td><?php echo $r['updated_at'] ? date('d/m/Y H:i', strtotime($r['updated_at'])) : '---'; ?></td>
                                         <td class="action-btns">
+                                            <button class="view-btn" title="View Details"
+                                                    data-id="<?php echo $r['complaint_id']; ?>"
+                                                    data-category="<?php echo htmlspecialchars($r['category_name'] ?? 'N/A'); ?>"
+                                                    data-title="<?php echo htmlspecialchars($r['title']); ?>"
+                                                    data-desc="<?php echo htmlspecialchars($r['description']); ?>"
+                                                    data-date="<?php echo date('Y-m-d H:i', strtotime($r['created_at'])); ?>"
+                                                    data-updated="<?php echo $r['updated_at'] ? date('Y-m-d H:i', strtotime($r['updated_at'])) : ''; ?>"
+                                                    data-complainant="<?php echo $r['is_anonymous'] ? 'Anonymous' : htmlspecialchars($r['first_name'] . ' ' . $r['last_name']); ?>"
+                                                    data-email="<?php echo $r['is_anonymous'] ? '---' : htmlspecialchars($r['email']); ?>"
+                                                    data-batch="<?php echo htmlspecialchars($r['batch'] ?? 'N/A'); ?>"
+                                                    data-incident-date="<?php echo $r['incident_date'] ? date('Y-m-d', strtotime($r['incident_date'])) : '---'; ?>"
+                                                    data-assigned-name="<?php echo $r['assign_first'] ? htmlspecialchars($r['assign_first'] . ' ' . $r['assign_last']) : 'Not Assigned'; ?>"
+                                                    data-status-label="<?php echo htmlspecialchars($r['status_label'] ?? 'Pending'); ?>"
+                                                    data-message="<?php echo htmlspecialchars($r['final_status_message'] ?? 'No closure message yet.'); ?>">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                </svg>
+                                            </button>
                                             <button class="delete-btn" title="Delete" data-id="<?php echo $r['complaint_id']; ?>">
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <polyline points="3 6 5 6 21 6"></polyline>
@@ -225,12 +270,97 @@ if ($res) {
         </main>
     </div>
 
+    <!-- View Details Modal -->
+    <div class="modal" id="viewModal" style="z-index: 99999;">
+        <div class="modal-content" style="max-width: 800px; width: 95%;">
+            <div class="modal-header">
+                <h3 class="modal-title">Report Details</h3>
+                <button class="modal-close" id="viewModalClose">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div class="view-details-container">
+                    <div class="view-sidebar">
+                        <div class="sidebar-info-group">
+                            <label>Status</label>
+                            <div id="viewStatus" class="status-badge-container"></div>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Complaint ID</label>
+                            <p id="viewId" style="font-weight: 600;"></p>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Assigned To</label>
+                            <p id="viewAssignedName"></p>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Created On</label>
+                            <p id="viewDate"></p>
+                        </div>
+                        <div class="sidebar-info-group">
+                            <label>Last Updated</label>
+                            <p id="viewUpdated"></p>
+                        </div>
+                    </div>
+
+                    <div class="view-main">
+                        <div class="view-section">
+                            <h4 class="section-title">General Information</h4>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label>Category</label>
+                                    <p id="viewCategory"></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Incident Date</label>
+                                    <p id="viewIncidentDate"></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Complainant</label>
+                                    <p id="viewComplainant"></p>
+                                </div>
+                                <div class="info-item">
+                                    <label>Batch</label>
+                                    <p id="viewBatch"></p>
+                                </div>
+                                <div class="info-item" style="grid-column: span 2;">
+                                    <label>Email Address</label>
+                                    <p id="viewEmail"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="view-section">
+                            <h4 class="section-title">Complaint Statement</h4>
+                            <div class="statement-box">
+                                <h5 id="viewTitle" class="statement-title"></h5>
+                                <p id="viewDesc" class="statement-text"></p>
+                            </div>
+                        </div>
+
+                        <div class="view-section" id="closureSection">
+                            <h4 class="section-title">Closure Message / Remarks</h4>
+                            <div class="statement-box" style="background: #f0f7ff; border-left-color: #3498db;">
+                                <p id="viewClosureMessage" class="statement-text"></p>
+                            </div>
+                        </div>
+
+                        <div class="view-section">
+                            <h4 class="section-title">Evidence & Attachments</h4>
+                            <div id="viewAttachments" class="attachments-list">
+                                <p class="no-attachments">No attachments found.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="viewCancelBtn">Close</button>
+            </div>
+        </div>
     </div>
 
-
-
     <!-- Custom Delete Modal Overlay -->
-    <div id="deleteModal" class="custom-modal-overlay">
+    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
         <div class="custom-modal-box">
             <h3 id="deleteMessage">Are you sure you want to delete this report?</h3>
             <div class="custom-modal-actions">
@@ -239,7 +369,6 @@ if ($res) {
             </div>
         </div>
     </div>
-
 
     <!-- Hidden form for deletion -->
     <form id="deleteForm" method="POST" style="display: none;">

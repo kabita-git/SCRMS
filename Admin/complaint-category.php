@@ -215,7 +215,8 @@ if ($res) {
                                                 }
                                             ?>
                                         </td>
-                                        <td class="action-btns">
+                                        <td>
+                                            <div class="action-btns">
                                             <button class="edit-btn" title="Edit" 
                                                     data-id="<?php echo $cat['category_id']; ?>" 
                                                     data-name="<?php echo htmlspecialchars($cat['category_name']); ?>" 
@@ -232,6 +233,7 @@ if ($res) {
                                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                                 </svg>
                                             </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

@@ -229,7 +229,19 @@
 }
 
 .page-btn:hover {
-    background: #f1f5f9;
+    background: #f3f4f6;
+    border-color: #2D1B69;
+}
+
+.page-btn.active {
+    background: #2D1B69;
+    color: white;
+    border-color: #2D1B69;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Text Truncation */
@@ -266,6 +278,11 @@
 .status-solved {
     background: #ecfdf5;
     color: #065f46;
+}
+
+.status-unresolved {
+    background: #fef2f2;
+    color: #991b1b;
 }
 
 /* Responsive Design (inherited from admin-dashboard.css) */

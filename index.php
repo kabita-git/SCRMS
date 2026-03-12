@@ -40,10 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $_SESSION['last_name'] = $user['last_name'];
             $_SESSION['user_email'] = $email;
             $_SESSION['user_role'] = $user['role'];
+            $_SESSION['role'] = $user['role'];
             $_SESSION['contact'] = $user['contact'];    
             
             // Determine redirect based on role (PHP dashboard placeholders)
-            $redirect = in_array($user['role'], ['Admin', 'DeptAdmin', 'UpperBody']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
+            $redirect = in_array($user['role'], ['Admin', 'DeptAdmin', 'UpperBody', 'Coordinator', 'HOD', 'Dean']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
             
             echo json_encode([
                 'success' => true, 
@@ -66,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 session_start();
 if (isset($_SESSION['user_id'])) {
     // Redirect if already logged in to PHP dashboards
-    $redirect = in_array($_SESSION['user_role'], ['Admin', 'DeptAdmin', 'UpperBody']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
+    $redirect = in_array($_SESSION['user_role'], ['Admin', 'DeptAdmin', 'UpperBody', 'Coordinator', 'HOD', 'Dean']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
     header("Location: " . $redirect);
     exit;
 }
@@ -128,7 +129,7 @@ if (isset($_SESSION['user_id'])) {
                 <button type="submit" class="login-btn">Login</button>
 
                 <!-- Forgot Password Link -->
-                <a href="#" class="forgot-password">Forgot Password?</a>
+                <!--<a href="#" class="forgot-password">Forgot Password?</a>-->
 
                 <div class="google-signin-container" style="margin: 10px 0; display: flex; justify-content: center;">
                     <div id="g_id_onload"

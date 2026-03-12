@@ -1,11 +1,14 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? $_SESSION['role'] ?? '', ['Admin', 'DeptAdmin', 'UpperBody'])) {
+$role = $_SESSION['user_role'] ?? $_SESSION['role'] ?? '';
+if (!isset($_SESSION['user_id']) || !in_array($role, ['Admin', 'DeptAdmin', 'UpperBody', 'Coordinator', 'HOD', 'Dean'])) {
     header('Location: /index.php');
     exit;
 }
 
 require_once '../Database/db-config.php';
+require_once '../Includes/AutoEscalator.php';
+AutoEscalator::runEscalation($conn);
 
 $message = "";
 $messageType = "";
@@ -78,9 +81,10 @@ if (isset($_SESSION['message'])) {
     unset($_SESSION['messageType']);
 }
 
-// Fetch current user info for DeptAdmin filtering
+// Fetch current user info for Dept-specific filtering
 $assigned_category = null;
-if ($_SESSION['user_role'] === 'DeptAdmin') {
+$departmental_roles = ['DeptAdmin', 'Coordinator', 'HOD', 'Dean'];
+if (in_array($role, $departmental_roles)) {
     $stmt = $conn->prepare("SELECT assigned_category FROM users WHERE user_id = ?");
     $stmt->bind_param("i", $_SESSION['user_id']);
     $stmt->execute();
@@ -110,8 +114,13 @@ if ($res_admins) {
 // Fetch complaints with assignment info
 $complaints = [];
 $whereClause = "";
-if ($_SESSION['user_role'] === 'DeptAdmin') {
-    $whereClause = "WHERE c.category_id = " . ($assigned_category !== null ? intval($assigned_category) : -1);
+
+if (in_array($role, $departmental_roles)) {
+    $assigned_category_sql = $assigned_category !== null ? intval($assigned_category) : -1;
+    $whereClause = "WHERE c.assigned_role = '$role'";
+    if ($assigned_category !== null) {
+        $whereClause .= " AND c.category_id = $assigned_category_sql";
+    }
 }
 
 $sql = "SELECT c.*, cat.category_name, s.status_label, 
@@ -193,8 +202,9 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
                                 <th>Created At</th>
                                 <th>Updated At</th>
                                 <th>Complainant</th>
-                                <?php if ($_SESSION['user_role'] !== 'DeptAdmin'): ?>
+                                <?php if (in_array($role, ['Admin', 'UpperBody', 'DeptAdmin', 'Coordinator', 'HOD', 'Dean'])): ?>
                                     <th>Assigned To</th>
+                                    <th>Current Level</th>
                                 <?php endif; ?>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -202,8 +212,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
                         </thead>
                         <tbody id="tableBody">
                             <?php if (empty($complaints)): ?>
-                                <tr>
-                                    <td colspan="<?php echo $_SESSION['user_role'] === 'DeptAdmin' ? '8' : '9'; ?>" style="text-align: center;">No complaints found.</td>
+                                    <td colspan="10" style="text-align: center;">No complaints found.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($complaints as $index => $comp): ?>
@@ -222,7 +231,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
                                                 }
                                             ?>
                                         </td>
-                                        <?php if ($_SESSION['user_role'] !== 'DeptAdmin'): ?>
+                                        <?php if (in_array($role, ['Admin', 'UpperBody', 'DeptAdmin', 'Coordinator', 'HOD', 'Dean'])): ?>
                                             <td>
                                                 <?php 
                                                     if ($comp['assign_first']) {
@@ -232,12 +241,18 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
                                                     }
                                                 ?>
                                             </td>
+                                            <td>
+                                                <span style="font-weight: 600; color: #4b5563;">
+                                                    <?php echo htmlspecialchars($comp['assigned_role'] ?? 'DeptAdmin'); ?>
+                                                </span>
+                                            </td>
                                         <?php endif; ?>
                                         <td>
                                             <?php 
                                                 $statusClass = 'status-pending';
                                                 if ($comp['status_label'] === 'Solved') $statusClass = 'status-solved';
                                                 elseif ($comp['status_label'] === 'In Progress') $statusClass = 'status-progress';
+                                                elseif ($comp['status_label'] === 'Unresolved') $statusClass = 'status-unresolved';
                                             ?>
                                             <span class="status-badge <?php echo $statusClass; ?>">
                                                 <?php echo htmlspecialchars($comp['status_label']); ?>
@@ -263,7 +278,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
                                                 </svg>
                                             </button>
 
-                                            <button class="edit-btn" title="<?php echo ($_SESSION['user_role'] === 'DeptAdmin') ? 'Write Remarks' : 'Update Status & Remarks'; ?>" 
+                                            <button class="edit-btn" title="<?php echo (in_array($role, $departmental_roles)) ? 'Write Remarks' : 'Update Status & Remarks'; ?>" 
                                                     data-id="<?php echo $comp['complaint_id']; ?>"
                                                     data-status="<?php echo $comp['status_id']; ?>"
                                                     data-message="<?php echo htmlspecialchars($comp['final_status_message'] ?? ''); ?>"
@@ -274,7 +289,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
                                                 </svg>
                                             </button>
 
-                                            <?php if ($_SESSION['user_role'] !== 'DeptAdmin'): ?>
+                                            <?php if (!in_array($role, $departmental_roles)): ?>
                                                 <button class="delete-btn" title="Delete" data-id="<?php echo $comp['complaint_id']; ?>">
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -308,7 +323,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
     <div class="modal" id="statusModal" style="z-index: 99999;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="statusModalTitle"><?php echo ($_SESSION['user_role'] === 'DeptAdmin') ? 'Write Remarks' : 'Update Status & Remarks'; ?></h3>
+                <h3 class="modal-title" id="statusModalTitle"><?php echo (in_array($role, $departmental_roles)) ? 'Write Remarks' : 'Update Status & Remarks'; ?></h3>
                 <button class="modal-close" id="statusModalClose">&times;</button>
             </div>
             <form id="statusForm" method="POST" action="">

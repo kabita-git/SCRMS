@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Start session for redirect if already logged in
 session_start();
 if (isset($_SESSION['user_id'])) {
-    $redirect = in_array($_SESSION['user_role'], ['Admin', 'DeptAdmin', 'UpperBody']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
+    $redirect = in_array($_SESSION['user_role'], ['Admin', 'DeptAdmin', 'UpperBody', 'Coordinator', 'HOD', 'Dean']) ? 'Admin/admin-dashboard.php' : 'User/user-dashboard.php';
     header("Location: " . $redirect);
     exit;
 }

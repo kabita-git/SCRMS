@@ -10,7 +10,7 @@ if (logoutTrigger && logoutModal) {
 }
 
 // File upload management
-const fileInvput = document.getElementById('evidence');
+const fileInput = document.getElementById('evidence');
 const fileListContainer = document.getElementById('fileList');
 const fileNameDisplay = document.getElementById('fileNameDisplay');
 
@@ -20,13 +20,36 @@ if (fileInput) {
     fileInput.addEventListener('change', function(e) {
         const newFiles = Array.from(e.target.files);
         
+        const allowedExtensions = ['jpg', 'png', 'gif', 'mp4', 'avi', 'mov', 'mp3', 'wav', 'aac', 'docx', 'pdf', 'txt'];
+        let hasInvalidFiles = false;
+
         newFiles.forEach(file => {
-            // Check if file is already in our list (by name and size)
-            if (!selectedFiles.some(f => f.name === f.name && f.size === file.size)) {
-                selectedFiles.push(file);
+            const fileName = file.name.toLowerCase();
+            const fileExt = fileName.split('.').pop();
+
+            if (!allowedExtensions.includes(fileExt)) {
+                hasInvalidFiles = true;
+            } else {
+                // Check if file is already in our list (by name and size)
+                if (!selectedFiles.some(f => f.name === f.name && f.size === file.size)) {
+                    selectedFiles.push(file);
+                }
             }
         });
         
+        if (hasInvalidFiles) {
+            const alertModal = document.getElementById('fileTypeAlertModal');
+            const alertMsg = document.getElementById('fileTypeAlertMessage');
+            const alertOk = document.getElementById('fileTypeAlertOk');
+            if (alertModal && alertMsg) {
+                alertMsg.textContent = 'File format does not support. Allowed formats are: JPG, PNG, GIF, MP4, AVI, MOV, MP3, WAV, AAC, DOCX, PDF, TXT';
+                alertModal.classList.add('active');
+                if (alertOk) {
+                    alertOk.onclick = () => alertModal.classList.remove('active');
+                }
+            }
+        }
+
         updateFileList();
         syncFileInput();
     });
@@ -97,7 +120,25 @@ function syncFileInput() {
     fileInput.files = dataTransfer.files;
 }
 
-// Set today's date as default
-if (document.getElementById('date')) {
-    document.getElementById('date').valueAsDate = new Date();
+// Initialize Flatpickr datepicker on the incident date field
+const dateInput = document.getElementById('date');
+const calendarIcon = document.querySelector('.calendar-icon');
+
+if (dateInput) {
+    const fp = flatpickr(dateInput, {
+        dateFormat: 'd/m/Y',
+        maxDate: 'today',
+        defaultDate: 'today',
+        allowInput: true,
+        disableMobile: true
+    });
+
+    // Make the calendar icon open/toggle the datepicker
+    if (calendarIcon) {
+        calendarIcon.style.pointerEvents = 'auto';
+        calendarIcon.style.cursor = 'pointer';
+        calendarIcon.addEventListener('click', function () {
+            fp.toggle();
+        });
+    }
 }
