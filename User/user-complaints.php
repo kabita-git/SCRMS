@@ -113,8 +113,8 @@ if ($stmt) {
 
                 <div class="table-controls">
                     <div class="entries-control">
-                        <span>Show</span>
-                        <select id="entriesPerPage">
+                        <label>Show</label>
+                        <select id="entriesSelect">
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
@@ -124,8 +124,8 @@ if ($stmt) {
                     </div>
 
                     <div class="search-control">
-                        <span>Search:</span>
-                        <input type="text" id="searchInput" placeholder="">
+                        <label>Search:</label>
+                        <input type="text" id="searchInput" placeholder="Search...">
                     </div>
                 </div>
 
@@ -139,12 +139,12 @@ if ($stmt) {
                                 <th>Category</th>
                                 <th>Assigned To</th>
                                 <th>Status</th>
-                                <th>Admin Message</th>
+                                <th>Remarks</th>
                                 <th>Evidence</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tableBody">
                             <?php if (empty($complaints)): ?>
                                 <tr>
                                     <td colspan="9" style="text-align: center;">You haven't submitted any complaints yet.</td>
@@ -170,6 +170,7 @@ if ($stmt) {
                                             $status = $c['status_label'] ?? 'Pending';
                                             if (stripos($status, 'Progress') !== false) $statusClass = 'status-progress';
                                             if (stripos($status, 'Solved') !== false || stripos($status, 'Fixed') !== false) $statusClass = 'status-solved';
+                                            if (stripos($status, 'Unresolved') !== false) $statusClass = 'status-unresolved';
                                             ?>
                                             <span class="status-badge <?php echo $statusClass; ?>" title="<?php echo htmlspecialchars($c['status_message'] ?? ''); ?>">
                                                 <?php echo htmlspecialchars($status); ?>
@@ -229,9 +230,13 @@ if ($stmt) {
                     </table>
                 </div>
 
-                <div class="pagination">
-                    <div class="pagination-info">
-                        Showing <?php echo count($complaints); ?> entries
+                <!-- Table Footer -->
+                <div class="table-footer">
+                    <div class="entries-info" id="entriesInfo">Showing <?php echo count($complaints); ?> entries</div>
+                    <div class="pagination">
+                        <button class="page-btn" id="prevBtn">Previous</button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn" id="nextBtn">Next</button>
                     </div>
                 </div>
             </div>
@@ -279,7 +284,7 @@ if ($stmt) {
                 </div>
 
                 <div>
-                    <p style="font-size: 13px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;">Admin Message</p>
+                    <p style="font-size: 13px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;">Remarks</p>
                     <div id="viewMessage" style="font-size: 15px; color: #374151; background: #f3f4f6; padding: 16px; border-radius: 8px; border-left: 4px solid #6b7280;"></div>
                 </div>
             </div>
