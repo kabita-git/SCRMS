@@ -82,56 +82,30 @@ if (isset($_SESSION['user_id'])) {
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="user-icon">
-                    <svg width="60" height="60" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="40" cy="40" r="40" fill="#2D1B69"/>
-                        <circle cx="40" cy="30" r="12" fill="white"/>
-                        <path d="M20 60C20 52 28 46 40 46C52 46 60 52 60 60" stroke="white" stroke-width="4" stroke-linecap="round"/>
-                        <circle cx="55" cy="55" r="10" fill="white"/>
-                        <path d="M55 55L60 60" stroke="#2D1B69" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+    <div class="split-container">
+        <!-- Left Panel: Brand & Visuals -->
+        <div class="left-panel">
+            <div class="overlay"></div>
+            <div class="left-content">
+                <div class="logo-area">
+                    <img src="Assets/images/logo-KU.png" alt="KU Logo" class="brand-logo">
+                    <div class="brand-text">
+                        <h2>Kathmandu University</h2>
+                        <h3>School of Education</h3>
+                        <p>SCRMS System</p>
+                    </div>
                 </div>
-                <h1 class="login-title">Log in to Complaint System</h1>
+                <div class="left-footer"></div>
             </div>
+        </div>
 
-            <!-- Login Form -->
-            <form id="loginForm" class="login-form">
-                <!-- Email Input -->
-                <div class="form-group">
-                    <label for="email">Email Address <span class="required">*</span></label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        placeholder="Enter your email"
-                        required
-                    >
-                    <span class="error-message" id="emailError"></span>
-                </div>
+        <!-- Right Panel: Login Form -->
+        <div class="right-panel">
+            <div class="form-container">
+                <h1 class="welcome-title">Welcome to SCRMS</h1>
+                <p class="welcome-subtitle">Student Complaint Registration and Management System</p>
 
-                <!-- Password Input -->
-                <div class="form-group">
-                    <label for="password">Password <span class="required">*</span></label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Enter your password"
-                        required
-                    >
-                    <span class="error-message" id="passwordError"></span>
-                </div>
-
-                <!-- Login Button -->
-                <button type="submit" class="login-btn">Login</button>
-
-                <!-- Forgot Password Link -->
-                <!--<a href="#" class="forgot-password">Forgot Password?</a>-->
-
-                <div class="google-signin-container" style="margin: 10px 0; display: flex; justify-content: center;">
+                <div class="google-login-section" style="width: 100%; max-width: 440px;">
                     <div id="g_id_onload"
                         data-client_id="265525982720-19tf8tergo216hsf0pfikc7uvo9ii1ok.apps.googleusercontent.com"
                         data-context="signin"
@@ -139,21 +113,59 @@ if (isset($_SESSION['user_id'])) {
                         data-callback="handleCredentialResponse"
                         data-auto_prompt="false">
                     </div>
-
                     <div class="g_id_signin"
                         data-type="standard"
                         data-shape="rectangular"
                         data-theme="outline"
-                        data-text="continue_with"
+                        data-text="signin_with"
                         data-size="large"
-                        data-logo_alignment="left">
+                        data-logo_alignment="left"
+                        data-width="440">
                     </div>
                 </div>
-                <!-- Register Link -->
-                <p class="register-text">
-                    Don't have an account? <a href="./registration.php" class="register-link">Register here.</a>
-                </p>
-            </form>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <form id="loginForm" class="modern-form">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                            </span>
+                            <input type="email" id="email" name="email" placeholder="name@example.com" required>
+                        </div>
+                        <span class="error-text" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </span>
+                            <input type="password" id="password" name="password" placeholder="••••••••" required>
+                        </div>
+                        <span class="error-text" id="passwordError"></span>
+                    </div>
+
+                    <div class="form-options"></div>
+
+                    <button type="submit" class="submit-btn primary-btn">Sign In</button>
+                    
+                    <div class="form-footer">
+                        <p>Don't have an account? <a href="registration.php" class="auth-link">Sign Up Here</a></p>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

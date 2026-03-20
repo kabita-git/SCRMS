@@ -106,112 +106,122 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="Assets/css/registration.css">
 </head>
 <body>
-    <div class="registration-container">
-        <div class="registration-header">
-            <div class="icon-container">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                </svg>
+    <div class="split-container">
+        <!-- Left Panel: Brand & Visuals -->
+        <div class="left-panel">
+            <div class="overlay"></div>
+            <div class="left-content">
+                <div class="logo-area">
+                    <img src="Assets/images/logo-KU.png" alt="KU Logo" class="brand-logo">
+                    <div class="brand-text">
+                        <h2>Kathmandu University</h2>
+                        <h3>School of Education</h3>
+                        <p>SCRMS System</p>
+                    </div>
+                </div>
+                <div class="left-footer"></div>
             </div>
-            <h1>Create Your Account</h1>
         </div>
-        
-        <form id="registrationForm">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label>Register As <span class="required">*</span></label>
-                <div style="display: flex; gap: 20px; margin-top: 5px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; border: none; padding: 0;">
-                        <input type="radio" name="userRole" value="Student" checked style="width: auto;"> Student
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; border: none; padding: 0;">
-                        <input type="radio" name="userRole" value="Faculty" style="width: auto;"> Faculty
-                    </label>
-                </div>
+
+        <!-- Right Panel: Registration Form -->
+        <div class="right-panel">
+            <div class="form-container registration-width">
+                <h1 class="welcome-title">Welcome to SCRMS</h1>
+                <p class="welcome-subtitle">Student Complaint Registration and Management System</p>
+
+                <form id="registrationForm" class="modern-form">
+                    <div class="form-group role-selector">
+                        <label>Register As</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="userRole" value="Student" checked> 
+                                <span class="radio-custom">Student</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="userRole" value="Faculty"> 
+                                <span class="radio-custom">Faculty</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row three-cols">
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" name="firstName" placeholder="First" required>
+                            <span class="error-text" id="firstNameError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="middleName">Middle Name</label>
+                            <input type="text" id="middleName" name="middleName" placeholder="Middle">
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <input type="text" id="lastName" name="lastName" placeholder="Last" required>
+                            <span class="error-text" id="lastNameError"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row two-cols">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="name@example.com" required>
+                            <span class="error-text" id="emailError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact">Contact Number</label>
+                            <input type="text" id="contact" name="contact" placeholder="98XXXXXXXX" required>
+                            <span class="error-text" id="contactError"></span>
+                        </div>
+                    </div>
+
+                    <div id="studentFields" class="form-row two-cols">
+                        <div class="form-group">
+                            <label for="batch">Batch</label>
+                            <select id="batch" name="batch">
+                                <option value="">Select Batch</option>
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                            <span class="error-text" id="batchError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="program">Program</label>
+                            <select id="program" name="program">
+                                <option value="">Select Program</option>
+                                <option value="B.Tech.Ed.IT & BIT">B.Tech.Ed.IT & BIT</option>
+                                <option value="B. Tech.Ed. in Civil">B. Tech.Ed. in Civil</option>
+                                <option value="BA.BED.TESOL">BA.BED.TESOL</option>
+                                <option value="BED in TCSOL">BED in TCSOL</option>
+                                <option value="B. Mathmatics Education">B. Mathmatics Education</option>
+                            </select>
+                            <span class="error-text" id="programError"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row two-cols">
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="••••••••" required>
+                            <span class="error-text" id="passwordError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+                            <span class="error-text" id="confirmPasswordError"></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn primary-btn">Create Account</button>
+                    
+                    <div class="form-footer">
+                        <p>Already have an account? <a href="index.php" class="auth-link">Login Here</a></p>
+                    </div>
+                </form>
             </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label for="firstName">First Name <span class="required">*</span></label>
-                    <input type="text" id="firstName" name="firstName" required>
-                    <span class="error-message" id="firstNameError"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="middleName">Middle Name</label>
-                    <input type="text" id="middleName" name="middleName">
-                    <span class="error-message" id="middleNameError"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="lastName">Last Name <span class="required">*</span></label>
-                    <input type="text" id="lastName" name="lastName" required>
-                    <span class="error-message" id="lastNameError"></span>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div class="form-group">
-                    <label for="email">Email Address <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required>
-                    <span class="error-message" id="emailError"></span>
-                </div>
-                
-                <div class="form-group">
-                    <label for="contact">Contact Number <span class="required">*</span></label>
-                    <input type="text" id="contact" name="contact" required>
-                    <span class="error-message" id="contactError"></span>
-                </div>
-            </div>
-
-            <div id="studentFields" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div class="form-group">
-                    <label for="batch">Batch <span class="required">*</span></label>
-                    <select id="batch" name="batch">
-                        <option value="">Select Batch</option>
-                        <option value="2023">2023</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                        <option value="2027">2027</option>
-                    </select>
-                    <span class="error-message" id="batchError"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="program">Program <span class="required">*</span></label>
-                    <select id="program" name="program">
-                        <option value="">Select Program</option>
-                        <option value="B.Tech.Ed.IT & BIT">B.Tech.Ed.IT & BIT</option>
-                        <option value="B. Tech.Ed. in Civil">B. Tech.Ed. in Civil</option>
-                        <option value="BA.BED.TESOL">BA.BED.TESOL</option>
-                        <option value="BED in TCSOL">BED in TCSOL</option>
-                        <option value="B. Mathmatics Education">B. Mathmatics Education</option>
-                    </select>
-                    <span class="error-message" id="programError"></span>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div class="form-group">
-                    <label for="password">Password <span class="required">*</span></label>
-                    <input type="password" id="password" name="password" required>
-                    <span class="error-message" id="passwordError"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required>
-                    <span class="error-message" id="confirmPasswordError"></span>
-                </div>
-            </div>
-
-            <button type="submit" class="register-btn">Register</button>
-
-            <div class="login-link">
-                Already have an account? <a href="index.php">Login here.</a>
-            </div>
-
-        </form>
+        </div>
     </div>
 
     <script src="Assets/JS/registration.js"></script>
