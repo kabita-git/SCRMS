@@ -17,17 +17,44 @@ $messageType = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $complaintId = isset($_POST['complaintId']) ? intval($_POST['complaintId']) : 0;
-
     if ($action === 'update_status') {
         $statusId = isset($_POST['statusId']) ? intval($_POST['statusId']) : 0;
         $statusMessage = isset($_POST['statusMessage']) ? trim($_POST['statusMessage']) : '';
 
-        // We no longer manually update assigned_to here as it's automatic based on category
+        require_once '../Includes/Mailer.php';
+        $notif_stmt = $conn->prepare("SELECT u.email, c.title, s.status_label, c.category_id FROM complaints c JOIN users u ON c.user_id = u.user_id JOIN complaint_statuses s ON s.status_id = ? WHERE c.complaint_id = ?");
+        $notif_stmt->bind_param("ii", $statusId, $complaintId);
+        $notif_stmt->execute();
+        $notif_res = $notif_stmt->get_result();
+        $notif_data = $notif_res->fetch_assoc();
+        
+        $recipient_email = $notif_data['email'] ?? '';
+        $complaint_title = $notif_data['title'] ?? 'Complaint';
+        $new_status_label = $notif_data['status_label'] ?? 'Updated';
+        $category_id = $notif_data['category_id'] ?? null;
+        $notif_stmt->close();
+
         $stmt = $conn->prepare("UPDATE complaints SET status_id = ?, final_status_message = ?, updated_at = NOW() WHERE complaint_id = ?");
         if ($stmt) {
             $stmt->bind_param("isi", $statusId, $statusMessage, $complaintId);
             if ($stmt->execute()) {
-                $_SESSION['message'] = "Complaint updated successfully!";
+                if (!empty($recipient_email)) {
+                    MailManager::notifyStatusChange($recipient_email, $complaint_title, $new_status_label, $statusMessage);
+                }
+                
+                $uid_stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
+                $uid_stmt->bind_param("s", $recipient_email);
+                $uid_stmt->execute();
+                $recipient_uid = $uid_stmt->get_result()->fetch_assoc()['user_id'] ?? 0;
+                $uid_stmt->close();
+
+                $notif_msg = "Your complaint '$complaint_title' has a new status update.";
+                $insert_notif = $conn->prepare("INSERT INTO notifications (user_id, complaint_id, category_id, message) VALUES (?, ?, ?, ?)");
+                $insert_notif->bind_param("iiis", $recipient_uid, $complaintId, $category_id, $notif_msg);
+                $insert_notif->execute();
+                $insert_notif->close();
+
+                $_SESSION['message'] = "Complaint updated and notification sent!";
                 $_SESSION['messageType'] = "success";
             } else {
                 $_SESSION['message'] = "Error updating complaint: " . $conn->error;
@@ -54,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit;
 }
 
-// Handle GET actions (AJAX)
 if (isset($_GET['action']) && $_GET['action'] === 'get_attachments') {
     $complaintId = isset($_GET['complaintId']) ? intval($_GET['complaintId']) : 0;
     $attachments = [];
@@ -320,7 +346,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
 
 
     <!-- Update Status & Assignment Modal -->
-    <div class="modal" id="statusModal" style="z-index: 99999;">
+    <div class="modal" id="statusModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="statusModalTitle"><?php echo (in_array($role, $departmental_roles)) ? 'Write Remarks' : 'Update Status & Remarks'; ?></h3>
@@ -360,7 +386,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
     </div>
 
     <!-- View Details Modal (Enhanced) -->
-    <div class="modal" id="viewModal" style="z-index: 99999;">
+    <div class="modal" id="viewModal">
         <div class="modal-content" style="max-width: 800px; width: 95%;">
             <div class="modal-header">
                 <h3 class="modal-title">Complaint Details</h3>
@@ -440,6 +466,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
                         </div>
                     </div>
                 </div>
+            </div>
 
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" id="viewCancelBtn">Close</button>
@@ -448,7 +475,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
     </div>
 
     <!-- Custom Delete Confirmation Modal -->
-    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
+    <div id="deleteModal" class="custom-modal-overlay">
         <div class="custom-modal-box">
             <h3 id="deleteMessage">Are you sure you want to delete this complaint?</h3>
             <div class="custom-modal-actions" id="deleteActions">
@@ -459,7 +486,7 @@ echo "<script>const statusMessages = " . json_encode($statuses) . ";</script>";
     </div>
 
     <!-- File Removal Confirmation Modal (Admin) -->
-    <div id="fileDeleteModal" class="custom-modal-overlay" style="z-index: 99999;">
+    <div id="fileDeleteModal" class="custom-modal-overlay">
         <div class="custom-modal-box">
             <h3 style="margin-bottom: 20px;">Are you sure you want to remove this evidence file?</h3>
             <div class="custom-modal-actions">

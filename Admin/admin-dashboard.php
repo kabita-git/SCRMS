@@ -78,6 +78,48 @@ if ($res_pending && $row = $res_pending->fetch_assoc()) {
     $pending_complaints = $row['count'];
 }
 
+// Fetch In Progress Complaints
+$progress_complaints = 0;
+$progress_where = " WHERE s.status_label = 'In Progress'";
+if (in_array($role, $departmental_roles)) {
+    $progress_where .= " AND c.assigned_role = '$role'";
+    if ($assigned_category !== null) {
+        $progress_where .= " AND c.category_id = $assigned_category_sql";
+    }
+}
+$res_progress = $conn->query("SELECT COUNT(*) as count FROM complaints c JOIN complaint_statuses s ON c.status_id = s.status_id" . $progress_where);
+if ($res_progress && $row = $res_progress->fetch_assoc()) {
+    $progress_complaints = $row['count'];
+}
+
+// Fetch Unresolved Complaints
+$unresolved_complaints = 0;
+$unresolved_where = " WHERE s.status_label = 'Unresolved'";
+if (in_array($role, $departmental_roles)) {
+    $unresolved_where .= " AND c.assigned_role = '$role'";
+    if ($assigned_category !== null) {
+        $unresolved_where .= " AND c.category_id = $assigned_category_sql";
+    }
+}
+$res_unresolved = $conn->query("SELECT COUNT(*) as count FROM complaints c JOIN complaint_statuses s ON c.status_id = s.status_id" . $unresolved_where);
+if ($res_unresolved && $row = $res_unresolved->fetch_assoc()) {
+    $unresolved_complaints = $row['count'];
+}
+
+// Fetch Recent Complaints (Last 7 Days)
+$recent_complaints = 0;
+$recent_where = " WHERE c.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+if (in_array($role, $departmental_roles)) {
+    $recent_where .= " AND c.assigned_role = '$role'";
+    if ($assigned_category !== null) {
+        $recent_where .= " AND c.category_id = $assigned_category_sql";
+    }
+}
+$res_recent = $conn->query("SELECT COUNT(*) as count FROM complaints c" . $recent_where);
+if ($res_recent && $row = $res_recent->fetch_assoc()) {
+    $recent_complaints = $row['count'];
+}
+
 // Fetch Complaints by Category for Chart
 $category_stats = [];
 $cat_sql = "SELECT cc.category_name, COUNT(c.complaint_id) as count 
@@ -207,9 +249,74 @@ if (in_array($role, $departmental_roles) && $assigned_category !== null) {
                             </svg>
                         </button>
                     </div>
+
+                    <!-- In Progress Card (New) -->
+                    <div class="stat-card stat-card-purple">
+                        <div class="stat-icon">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number"><?php echo $progress_complaints; ?></h3>
+                            <p class="stat-label">In Progress</p>
+                        </div>
+                        <button class="stat-more-btn" onclick="window.location.href='complaint-management.php'">
+                            More info
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 12 8"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Unresolved Card (New) -->
+                    <div class="stat-card stat-card-red">
+                        <div class="stat-icon">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number"><?php echo $unresolved_complaints; ?></h3>
+                            <p class="stat-label">Unresolved</p>
+                        </div>
+                        <button class="stat-more-btn" onclick="window.location.href='complaint-management.php'">
+                            More info
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 12 8"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Recent (Last 7 Days) Card (New) -->
+                    <div class="stat-card stat-card-indigo">
+                        <div class="stat-icon">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number"><?php echo $recent_complaints; ?></h3>
+                            <p class="stat-label">Last 7 Days</p>
+                        </div>
+                        <button class="stat-more-btn" onclick="window.location.href='complaint-management.php'">
+                            More info
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 12 8"></polyline>
+                            </svg>
+                        </button>
+                    </div>
                 <?php else: ?>
                     <!-- Total Users Card for Admin/UpperBody -->
-                    <div class="stat-card stat-card-green">
+                    <div class="stat-card stat-card-indigo">
                         <div class="stat-icon">
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -239,9 +346,72 @@ if (in_array($role, $departmental_roles) && $assigned_category !== null) {
                         </div>
                         <div class="stat-content">
                             <h3 class="stat-number"><?php echo $solved_complaints; ?></h3>
-                            <p class="stat-label">Total Complaint Solve</p>
+                            <p class="stat-label">Total Solved</p>
                         </div>
                         <button class="stat-more-btn" onclick="window.location.href='reports.php'">
+                            More info
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 12 8"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Pending Card for Admin -->
+                    <div class="stat-card stat-card-green">
+                        <div class="stat-icon">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number"><?php echo $pending_complaints; ?></h3>
+                            <p class="stat-label">Total Pending</p>
+                        </div>
+                        <button class="stat-more-btn" onclick="window.location.href='complaint-management.php'">
+                            More info
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 12 8"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- In Progress Card for Admin -->
+                    <div class="stat-card stat-card-purple">
+                        <div class="stat-icon">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number"><?php echo $progress_complaints; ?></h3>
+                            <p class="stat-label">In Progress</p>
+                        </div>
+                        <button class="stat-more-btn" onclick="window.location.href='complaint-management.php'">
+                            More info
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 12 8"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Unresolved Card for Admin -->
+                    <div class="stat-card stat-card-red">
+                        <div class="stat-icon">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number"><?php echo $unresolved_complaints; ?></h3>
+                            <p class="stat-label">Unresolved</p>
+                        </div>
+                        <button class="stat-more-btn" onclick="window.location.href='complaint-management.php'">
                             More info
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>

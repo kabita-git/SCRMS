@@ -271,7 +271,7 @@ if ($res) {
     </div>
 
     <!-- View Details Modal -->
-    <div class="modal" id="viewModal" style="z-index: 99999;">
+    <div class="modal" id="viewModal">
         <div class="modal-content" style="max-width: 800px; width: 95%;">
             <div class="modal-header">
                 <h3 class="modal-title">Report Details</h3>
@@ -360,7 +360,7 @@ if ($res) {
     </div>
 
     <!-- Custom Delete Modal Overlay -->
-    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
+    <div id="deleteModal" class="custom-modal-overlay">
         <div class="custom-modal-box">
             <h3 id="deleteMessage">Are you sure you want to delete this report?</h3>
             <div class="custom-modal-actions">

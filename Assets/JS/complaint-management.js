@@ -233,4 +233,39 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Auto-open modal if ID is in URL
+    function handleAutoOpen() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const complaintId = urlParams.get('id');
+        if (complaintId) {
+            console.log('Detected ID in URL:', complaintId);
+            
+            const tryOpen = (retryCount = 0) => {
+                const viewBtn = document.querySelector(`.view-btn[data-id="${complaintId}"]`);
+                if (viewBtn) {
+                    console.log('Automated click triggered for View button.');
+                    const row = viewBtn.closest('tr');
+                    if (row) row.style.display = '';
+                    viewBtn.click();
+                } else if (retryCount < 10) {
+                    setTimeout(() => tryOpen(retryCount + 1), 200);
+                } else {
+                    console.error('Final view button search failed for ID:', complaintId);
+                }
+            };
+
+            const tBody = document.getElementById('tableBody');
+            if (tBody) {
+                tBody.querySelectorAll('tr').forEach(row => {
+                    if (row.querySelector(`.view-btn[data-id="${complaintId}"]`)) {
+                        row.style.display = '';
+                    }
+                });
+            }
+            tryOpen();
+        }
+    }
+
+    handleAutoOpen();
+
 });

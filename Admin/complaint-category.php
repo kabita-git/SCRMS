@@ -260,7 +260,7 @@ if ($res) {
     </div>
 
     <!-- Add/Edit Category Modal -->
-    <div class="modal" id="categoryModal" style="z-index: 99999;">
+    <div class="modal" id="categoryModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="modalTitle">Add Category</h3>
@@ -295,7 +295,7 @@ if ($res) {
     </div>
 
     <!-- Custom Delete Confirmation Modal -->
-    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
+    <div id="deleteModal" class="custom-modal-overlay">
         <div class="custom-modal-box">
             <h3 id="deleteMessage">Are you sure you want to delete this category?</h3>
             <div class="custom-modal-actions" id="deleteActions">

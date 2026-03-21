@@ -228,7 +228,7 @@ if ($res_users) {
     </div>
 
     <!-- Edit User Modal -->
-    <div class="modal" id="editUserModal" style="z-index: 99999;">
+    <div class="modal" id="editUserModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Edit User</h3>
@@ -287,7 +287,7 @@ if ($res_users) {
     </div>
 
     <!-- Custom Delete Modal Overlay -->
-    <div id="deleteModal" class="custom-modal-overlay" style="z-index: 99999;">
+    <div id="deleteModal" class="custom-modal-overlay">
         <div class="custom-modal-box">
             <h3>Are you sure you want to delete this user?</h3>
             <div class="custom-modal-actions">
