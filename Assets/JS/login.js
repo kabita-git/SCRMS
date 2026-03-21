@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const emailError = document.getElementById('emailError');
     const passwordError = document.getElementById('passwordError');
 
+    if (!loginForm) return;
+
     // Email validation function
     function validateEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,15 +15,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Clear error message on input
-    emailInput.addEventListener('input', function() {
-        emailError.textContent = '';
-        emailInput.style.borderColor = '#d1d5db';
-    });
+    if (emailInput) {
+        emailInput.addEventListener('input', function() {
+            emailError.textContent = '';
+            emailInput.style.borderColor = '#d1d5db';
+        });
+    }
 
-    passwordInput.addEventListener('input', function() {
-        passwordError.textContent = '';
-        passwordInput.style.borderColor = '#d1d5db';
-    });
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            passwordError.textContent = '';
+            passwordInput.style.borderColor = '#d1d5db';
+        });
+    }
 
     // Form submission handler
     loginForm.addEventListener('submit', function(e) {
@@ -62,10 +68,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // If validation passes, send to server
         if (isValid) {
             // Show loading state
-            const loginBtn = loginForm.querySelector('.login-btn');
-            const originalText = loginBtn.textContent;
-            loginBtn.textContent = 'Logging in...';
-            loginBtn.disabled = true;
+            // Updated to .submit-btn to match new UI
+            const loginBtn = loginForm.querySelector('.submit-btn');
+            const originalText = loginBtn ? loginBtn.textContent : 'Sign In';
+            if (loginBtn) {
+                loginBtn.textContent = 'Logging in...';
+                loginBtn.disabled = true;
+            }
 
             // Prepare form data
             const formData = new FormData();
@@ -87,13 +96,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Show server error message
                     const serverError = document.createElement('div');
-                    serverError.style.cssText = 'background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;';
+                    serverError.style.cssText = 'background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fecaca; font-size: 14px; text-align: center;';
                     serverError.textContent = data.message;
-                    loginForm.parentElement.insertBefore(serverError, loginForm);
+                    loginForm.prepend(serverError);
                     
                     // Reset button
-                    loginBtn.textContent = originalText;
-                    loginBtn.disabled = false;
+                    if (loginBtn) {
+                        loginBtn.textContent = originalText;
+                        loginBtn.disabled = false;
+                    }
 
                     // Auto-remove error after 5 seconds
                     setTimeout(() => serverError.remove(), 5000);
@@ -102,33 +113,19 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 const serverError = document.createElement('div');
-                serverError.style.cssText = 'background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;';
+                serverError.style.cssText = 'background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fecaca; font-size: 14px; text-align: center;';
                 serverError.textContent = 'An error occurred. Please try again.';
-                loginForm.parentElement.insertBefore(serverError, loginForm);
+                loginForm.prepend(serverError);
                 
-                loginBtn.textContent = originalText;
-                loginBtn.disabled = false;
+                if (loginBtn) {
+                    loginBtn.textContent = originalText;
+                    loginBtn.disabled = false;
+                }
 
                 setTimeout(() => serverError.remove(), 5000);
             });
         }
     });
-
-    // Forgot password handler
-    const forgotPasswordLink = document.querySelector('.forgot-password');
-    forgotPasswordLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        alert('Password reset functionality will be implemented here.');
-    });
-
-    // Register link handler — navigate to registration page
-    const registerLink = document.querySelector('.register-link');
-    if (registerLink) {
-        registerLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.location.href = 'registration.php';
-        });
-    }
 });
 
 // Google Sign-In Callback

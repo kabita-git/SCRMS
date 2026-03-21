@@ -75,6 +75,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt->bind_param("sssssssss", $firstName, $middleName, $lastName, $email, $contact, $batchVal, $programVal, $hashedPassword, $role);
     
     if ($stmt->execute()) {
+        // Send a welcome email
+        require_once 'Includes/Mailer.php';
+        $welcomeSubject = "Welcome to SCRMS - Account Created Successfully";
+        $welcomeBody = "
+            <p>Dear $firstName,</p>
+            <p>Your account has been successfully created in the <strong>Student Complaint Registration and Management System (SCRMS)</strong>.</p>
+            <p>You can now log in using your email address and track your complaints in real-time.</p>
+            <p>Best regards,<br>The SCRMS Team</p>
+        ";
+        MailManager::send($email, $welcomeSubject, $welcomeBody);
+
         echo json_encode([
             'success' => true,
             'message' => 'Registration successful! Please login with your credentials.',
@@ -102,7 +113,9 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - Student Complaint System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Assets/css/registration.css">
 </head>
 <body>
@@ -116,8 +129,11 @@ if (isset($_SESSION['user_id'])) {
                     <div class="brand-text">
                         <h2>Kathmandu University</h2>
                         <h3>School of Education</h3>
-                        <p>SCRMS System</p>
                     </div>
+                </div>
+                <div class="system-info">
+                    <h1 class="system-title">Student Complaint Registration and Management System</h1>
+                    <p class="system-desc">A transparent platform for students to submit, track, and resolve complaints efficiently. Stay informed at every step with real-time updates from the administration.</p>
                 </div>
                 <div class="left-footer"></div>
             </div>
@@ -127,7 +143,6 @@ if (isset($_SESSION['user_id'])) {
         <div class="right-panel">
             <div class="form-container registration-width">
                 <h1 class="welcome-title">Welcome to SCRMS</h1>
-                <p class="welcome-subtitle">Student Complaint Registration and Management System</p>
 
                 <form id="registrationForm" class="modern-form">
                     <div class="form-group role-selector">

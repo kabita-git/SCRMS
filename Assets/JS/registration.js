@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const confirmPasswordInput = document.getElementById('confirmPassword');
 
     const firstNameError = document.getElementById('firstNameError');
-    const middleNameError = document.getElementById('middleNameError');
     const lastNameError = document.getElementById('lastNameError');
     const emailError = document.getElementById('emailError');
     const contactError = document.getElementById('contactError');
@@ -24,13 +23,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const roleRadios = document.querySelectorAll('input[name="userRole"]');
     const studentFields = document.getElementById('studentFields');
 
+    if (!registrationForm) return;
+
     // Role toggle handler
     roleRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             if (this.value === 'Faculty') {
                 studentFields.style.display = 'none';
             } else {
-                studentFields.style.display = 'grid';
+                studentFields.style.display = 'flex'; // Uses flex for the new split layout
             }
         });
     });
@@ -41,67 +42,36 @@ document.addEventListener('DOMContentLoaded', function () {
         return emailRegex.test(email);
     }
 
-    // Clear error message on input
-    firstNameInput.addEventListener('input', function () {
-        firstNameError.textContent = '';
-        firstNameInput.style.borderColor = '#d1d5db';
-    });
-
-    lastNameInput.addEventListener('input', function () {
-        lastNameError.textContent = '';
-        lastNameInput.style.borderColor = '#d1d5db';
-    });
-
-    emailInput.addEventListener('input', function () {
-        emailError.textContent = '';
-        emailInput.style.borderColor = '#d1d5db';
-    });
-
-    contactInput.addEventListener('input', function () {
-        contactError.textContent = '';
-        contactInput.style.borderColor = '#d1d5db';
-    });
-
-    passwordInput.addEventListener('input', function () {
-        passwordError.textContent = '';
-        passwordInput.style.borderColor = '#d1d5db';
-    });
-
-    confirmPasswordInput.addEventListener('input', function () {
-        confirmPasswordError.textContent = '';
-        confirmPasswordInput.style.borderColor = '#d1d5db';
+    // Set common visual styles on input
+    const inputs = registrationForm.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.style.borderColor = '#e2e8f0';
+            const errId = this.id + 'Error';
+            const errEl = document.getElementById(errId);
+            if (errEl) errEl.textContent = '';
+        });
     });
 
     // Form submission handler
     registrationForm.addEventListener('submit', function (e) {
         e.preventDefault();
 
-        // Clear previous errors
-        firstNameError.textContent = '';
-        lastNameError.textContent = '';
-        emailError.textContent = '';
-        passwordError.textContent = '';
-        confirmPasswordError.textContent = '';
-
-        firstNameInput.style.borderColor = '#d1d5db';
-        lastNameInput.style.borderColor = '#d1d5db';
-        emailInput.style.borderColor = '#d1d5db';
-        contactInput.style.borderColor = '#d1d5db';
-        passwordInput.style.borderColor = '#d1d5db';
-        confirmPasswordInput.style.borderColor = '#d1d5db';
+        // Clear previous state
+        const errorTexts = registrationForm.querySelectorAll('.error-text');
+        errorTexts.forEach(t => t.textContent = '');
+        inputs.forEach(i => i.style.borderColor = '#e2e8f0');
 
         let isValid = true;
 
         // Validate names
-        const firstName = firstNameInput.value.trim();
-        if (firstName === '') {
+        if (firstNameInput.value.trim() === '') {
             firstNameError.textContent = 'Required';
             firstNameInput.style.borderColor = '#e74c3c';
             isValid = false;
         }
 
-        const lastName = lastNameInput.value.trim();
-        if (lastName === '') {
+        if (lastNameInput.value.trim() === '') {
             lastNameError.textContent = 'Required';
             lastNameInput.style.borderColor = '#e74c3c';
             isValid = false;
@@ -121,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 isValid = false;
             }
         }
-
 
         // Validate email
         const email = emailInput.value.trim();
@@ -173,17 +142,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // If validation passes, send to server
         if (isValid) {
-            const registerBtn = registrationForm.querySelector('.register-btn');
-            const originalText = registerBtn.textContent;
-            registerBtn.textContent = 'Registering...';
-            registerBtn.disabled = true;
+            // Updated to .submit-btn
+            const registerBtn = registrationForm.querySelector('.submit-btn');
+            const originalText = registerBtn ? registerBtn.textContent : 'Create Account';
+            if (registerBtn) {
+                registerBtn.textContent = 'Registering...';
+                registerBtn.disabled = true;
+            }
 
             // Prepare form data
             const formData = new FormData();
             formData.append('action', 'register');
-            formData.append('firstName', firstName);
+            formData.append('firstName', firstNameInput.value.trim());
             formData.append('middleName', middleNameInput.value.trim());
-            formData.append('lastName', lastName);
+            formData.append('lastName', lastNameInput.value.trim());
             formData.append('email', email);
             formData.append('contact', contact);
             formData.append('userRole', userRole);
@@ -197,75 +169,47 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 body: formData
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show success message
-                        const successMessage = document.createElement('div');
-                        successMessage.style.cssText = 'background-color: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c3e6cb;';
-                        successMessage.textContent = data.message;
-                        registrationForm.parentElement.insertBefore(successMessage, registrationForm);
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const successMessage = document.createElement('div');
+                    successMessage.style.cssText = 'background-color: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bbf7d0; font-size: 14px; text-align: center;';
+                    successMessage.textContent = data.message;
+                    registrationForm.prepend(successMessage);
 
-                        // Reset form
-                        registrationForm.reset();
+                    registrationForm.reset();
 
-                        // Redirect to login after 2 seconds
-                        setTimeout(() => {
-                            window.location.href = data.redirect;
-                        }, 2000);
-                    } else {
-                        // Show server error message
-                        const serverError = document.createElement('div');
-                        serverError.style.cssText = 'background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;';
-                        serverError.textContent = data.message;
-                        registrationForm.parentElement.insertBefore(serverError, registrationForm);
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 2000);
+                } else {
+                    const serverError = document.createElement('div');
+                    serverError.style.cssText = 'background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fecaca; font-size: 14px; text-align: center;';
+                    serverError.textContent = data.message;
+                    registrationForm.prepend(serverError);
 
-                        // Reset button
+                    if (registerBtn) {
                         registerBtn.textContent = originalText;
                         registerBtn.disabled = false;
-
-                        // Auto-remove error after 5 seconds
-                        setTimeout(() => serverError.remove(), 5000);
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    const serverError = document.createElement('div');
-                    serverError.style.cssText = 'background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #f5c6cb;';
-                    serverError.textContent = 'An error occurred during registration. Please try again.';
-                    registrationForm.parentElement.insertBefore(serverError, registrationForm);
-
-                    registerBtn.textContent = originalText;
-                    registerBtn.disabled = false;
 
                     setTimeout(() => serverError.remove(), 5000);
-                });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const serverError = document.createElement('div');
+                serverError.style.cssText = 'background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fecaca; font-size: 14px; text-align: center;';
+                serverError.textContent = 'An error occurred during registration. Please try again.';
+                registrationForm.prepend(serverError);
+
+                if (registerBtn) {
+                    registerBtn.textContent = originalText;
+                    registerBtn.disabled = false;
+                }
+
+                setTimeout(() => serverError.remove(), 5000);
+            });
         }
     });
 });
-
-// Google Sign-In Callback
-function handleCredentialResponse(response) {
-    console.log("Encoded JWT ID token: " + response.credential);
-
-    // Send ID token to backend
-    const formData = new FormData();
-    formData.append('id_token', response.credential);
-
-    fetch('Includes/google-login.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = data.redirect;
-            } else {
-                alert("Google Sign-In failed: " + data.message);
-            }
-        })
-        .catch(err => {
-            console.error("Error during Google Sign-In:", err);
-            alert("An error occurred during Google Sign-In. Please try again.");
-        });
-}
