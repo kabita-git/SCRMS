@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const status = viewBtn.getAttribute('data-status');
                 const message = viewBtn.getAttribute('data-message');
                 const assigned = viewBtn.getAttribute('data-assigned');
+                const level = viewBtn.getAttribute('data-level');
 
                 document.getElementById('viewTitle').textContent = title;
                 document.getElementById('viewDesc').textContent = desc;
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('viewDate').textContent = date;
                 document.getElementById('viewMessage').textContent = message || 'No message yet';
                 document.getElementById('viewAssigned').textContent = assigned;
+                document.getElementById('viewLevel').textContent = level;
 
                 const viewStatus = document.getElementById('viewStatus');
                 if (viewStatus) {
@@ -133,5 +135,46 @@ document.addEventListener('DOMContentLoaded', function () {
             pager.refresh();
         });
     }
+
+    // Auto-open modal if ID is in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idParam = urlParams.get('id');
+    // Auto-open modal if ID is in URL
+    function handleAutoOpen() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const idParam = urlParams.get('id');
+        if (idParam) {
+            console.log('Detected ID in URL:', idParam);
+            
+            // Function to find and click the button
+            const tryOpen = (retryCount = 0) => {
+                const viewBtn = document.querySelector(`.view-btn[data-id="${idParam}"]`);
+                if (viewBtn) {
+                    console.log('Automated click triggered for View button.');
+                    // Force row visibility in case pagination is active
+                    const row = viewBtn.closest('tr');
+                    if (row) row.style.display = '';
+                    viewBtn.click();
+                } else if (retryCount < 10) {
+                    console.log(`View button not found for ID: ${idParam}. Retrying... (${retryCount + 1}/10)`);
+                    setTimeout(() => tryOpen(retryCount + 1), 200);
+                } else {
+                    console.error('Final view button search failed for ID:', idParam);
+                }
+            };
+
+            // Initial manual override of pagination for the target row if possible
+            if (tableBody) {
+                tableBody.querySelectorAll('tr').forEach(row => {
+                    const btn = row.querySelector(`.view-btn[data-id="${idParam}"]`);
+                    if (btn) row.style.display = '';
+                });
+            }
+
+            tryOpen();
+        }
+    }
+
+    handleAutoOpen();
 
 });

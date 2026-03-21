@@ -136,17 +136,15 @@ body {
     line-height: 1.8;
     color: #666;
     font-size: 20px;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
 }
 
 .cards-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 25px;
-    max-width: 1200px;
-    margin: 0 auto 40px auto;
+    width: 100%;
+    margin-bottom: 40px;
 }
 
 /* Stat Card */
@@ -178,6 +176,21 @@ body {
 
 .stat-card-orange {
     background: linear-gradient(135deg, #F4B084 0%, #E89963 100%);
+    color: white;
+}
+
+.stat-card-purple {
+    background: linear-gradient(135deg, #A66DD4 0%, #8E44AD 100%);
+    color: white;
+}
+
+.stat-card-red {
+    background: linear-gradient(135deg, #E06666 0%, #C0392B 100%);
+    color: white;
+}
+
+.stat-card-indigo {
+    background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
     color: white;
 }
 

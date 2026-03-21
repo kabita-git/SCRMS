@@ -138,6 +138,7 @@ if ($stmt) {
                                 <th>Description</th>
                                 <th>Category</th>
                                 <th>Assigned To</th>
+                                <th>Current Level</th>
                                 <th>Status</th>
                                 <th>Remarks</th>
                                 <th>Evidence</th>
@@ -147,7 +148,7 @@ if ($stmt) {
                         <tbody id="tableBody">
                             <?php if (empty($complaints)): ?>
                                 <tr>
-                                    <td colspan="9" style="text-align: center;">You haven't submitted any complaints yet.</td>
+                                    <td colspan="10" style="text-align: center;">You haven't submitted any complaints yet.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($complaints as $index => $c): ?>
@@ -163,6 +164,11 @@ if ($stmt) {
                                                 $assigned = trim($c['assigned_head'] ?? '');
                                                 echo !empty($assigned) ? htmlspecialchars($assigned) : '<span style="color: #999; font-style: italic;">Not Assigned</span>'; 
                                             ?>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 600; color: #4b5563;">
+                                                <?php echo htmlspecialchars(trim($c['assigned_role'] ?? 'DeptAdmin')); ?>
+                                            </span>
                                         </td>
                                         <td>
                                             <?php 
@@ -209,7 +215,14 @@ if ($stmt) {
                                                         data-date="<?php echo date('M d, Y', strtotime($c['created_at'])); ?>"
                                                         data-status="<?php echo htmlspecialchars($status); ?>"
                                                         data-message="<?php echo htmlspecialchars($c['final_status_message'] ?? 'No message yet'); ?>"
-                                                        data-assigned="<?php echo !empty($c['assigned_head']) ? htmlspecialchars($c['assigned_head']) : 'Not Assigned'; ?>">
+                                                        data-assigned="<?php 
+                                                            $assigned = trim($c['assigned_head'] ?? '');
+                                                            echo !empty($assigned) ? htmlspecialchars($assigned) : 'Not Assigned';
+                                                        ?>"
+                                                        data-level="<?php 
+                                                            $level = trim($c['assigned_role'] ?? 'DeptAdmin');
+                                                            echo htmlspecialchars($level);
+                                                        ?>">
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                                         <circle cx="12" cy="12" r="3"></circle>
@@ -244,7 +257,7 @@ if ($stmt) {
     </div>
 
     <!-- View Complaint Modal -->
-    <div class="modal modal-large" id="viewModal" style="z-index: 99999;">
+    <div class="modal modal-large" id="viewModal">
         <div class="modal-content" style="max-width: 800px; width: 90%;">
             <div class="modal-header">
                 <h3 class="modal-title">Complaint Details</h3>
@@ -276,6 +289,10 @@ if ($stmt) {
                         <p style="font-size: 13px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Assigned To</p>
                         <p id="viewAssigned" style="font-size: 15px; color: #374151;"></p>
                     </div>
+                    <div>
+                        <p style="font-size: 13px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Current Level</p>
+                        <p id="viewLevel" style="font-size: 15px; color: #374151;"></p>
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 24px;">
@@ -295,7 +312,7 @@ if ($stmt) {
     </div>
 
     <!-- Custom Delete Confirmation Modal -->
-    <div class="custom-modal-overlay" id="deleteModal" style="z-index: 99999;">
+    <div class="custom-modal-overlay" id="deleteModal">
         <div class="custom-modal-box">
             <h3>Are you sure you want to delete this complaint?</h3>
             <p style="margin-bottom: 25px; color: #666;">This action cannot be undone.</p>

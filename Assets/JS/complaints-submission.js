@@ -38,15 +38,14 @@ if (fileInput) {
         });
         
         if (hasInvalidFiles) {
-            const alertModal = document.getElementById('fileTypeAlertModal');
-            const alertMsg = document.getElementById('fileTypeAlertMessage');
-            const alertOk = document.getElementById('fileTypeAlertOk');
-            if (alertModal && alertMsg) {
-                alertMsg.textContent = 'File format does not support. Allowed formats are: JPG, PNG, GIF, MP4, AVI, MOV, MP3, WAV, AAC, DOCX, PDF, TXT';
-                alertModal.classList.add('active');
-                if (alertOk) {
-                    alertOk.onclick = () => alertModal.classList.remove('active');
-                }
+            const warningBox = document.querySelector('.file-warning span');
+            if (warningBox) {
+                warningBox.style.color = '#dc3545';
+                warningBox.textContent = 'Some files were rejected! Only Audio, Video and Text files (JPG, PNG, MP4, PDF, etc.) are supported.';
+                setTimeout(() => {
+                    warningBox.style.color = '';
+                    warningBox.textContent = 'Note: You can upload Audio, Video and Text files. (Supported: JPG, PNG, MP4, PDF, DOCX, TXT, etc.)';
+                }, 5000);
             }
         }
 
@@ -120,7 +119,7 @@ function syncFileInput() {
     fileInput.files = dataTransfer.files;
 }
 
-// Initialize Flatpickr datepicker on the incident date field
+// Initialize Flatpickr datepicker on the incident date field (Calender)
 const dateInput = document.getElementById('date');
 const calendarIcon = document.querySelector('.calendar-icon');
 

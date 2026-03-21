@@ -96,7 +96,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
         $conn->commit();
-        $_SESSION['message'] = "Complaint and evidence submitted successfully!";
+
+        require_once '../Includes/Mailer.php';
+
+        // Fetch Category Name for email content
+        $cat_label = 'General';
+        if ($finalCategoryId) {
+            $c_stmt = $conn->prepare("SELECT category_name FROM complaint_categories WHERE category_id = ?");
+            $c_stmt->bind_param("i", $finalCategoryId);
+            $c_stmt->execute();
+            $cat_data = $c_stmt->get_result()->fetch_assoc();
+            $cat_label = $cat_data['category_name'] ?? 'General';
+            $c_stmt->close();
+        }
+
+        $admin_emails = [];
+        $admin_res = $conn->query("SELECT email FROM users WHERE role = 'Admin'");
+        while ($row = $admin_res->fetch_assoc())
+            $admin_emails[] = $row['email'];
+
+        if ($finalCategoryId) {
+            $dept_stmt = $conn->prepare("SELECT email FROM users WHERE assigned_category = ?");
+            $dept_stmt->bind_param("i", $finalCategoryId);
+            $dept_stmt->execute();
+            $dept_res = $dept_stmt->get_result();
+            while ($row = $dept_res->fetch_assoc())
+                $admin_emails[] = $row['email'];
+            $dept_stmt->close();
+        }
+
+        $admin_emails = array_unique($admin_emails);
+        if (!empty($admin_emails)) {
+            $ins_notif = $conn->prepare("INSERT INTO notifications (user_id, complaint_id, category_id, message) VALUES (?, ?, ?, ?)");
+            foreach ($admin_emails as $a_email) {
+                // Fetch User ID for DB entry
+                $u_stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
+                $u_stmt->bind_param("s", $a_email);
+                $u_stmt->execute();
+                $u_res = $u_stmt->get_result();
+                $a_id = $u_res->fetch_assoc()['user_id'] ?? 0;
+                $u_stmt->close();
+
+                // Define Notification Message
+                $notif_msg = "A new complaint has been submitted";
+
+                // Send Email Notification
+                MailManager::notifyNewComplaint($a_email, $title, $cat_label);
+
+                // Insert DB Notification
+                if ($a_id > 0) {
+                    $ins_notif->bind_param("iiis", $a_id, $complaintId, $finalCategoryId, $notif_msg);
+                    $ins_notif->execute();
+                }
+            }
+            $ins_notif->close();
+        }
+
+        $user_email = $_SESSION['user_email'] ?? '';
+        if (!empty($user_email)) {
+             $user_subject = "Complaint Submitted Successfully: $title";
+             $user_body = "
+                <p>Dear User,</p>
+                <p>Your complaint has been successfully registered in the system.</p>
+                <p><strong>Title:</strong> $title</p>
+                <p><strong>Category:</strong> $cat_label</p>
+                <p>Wait for an admin to review it. You will receive an email for every update.</p>
+             ";
+             MailManager::send($user_email, $user_subject, $user_body);
+        }
+        // --- End Notification Logic ---
+
+        $_SESSION['message'] = "Complaint and evidence submitted successfully! Admin notified.";
         $_SESSION['messageType'] = "success";
         header("Location: user-complaints.php");
         exit;
@@ -204,7 +274,15 @@ endforeach; ?>
                                 </svg>
                             </label>
                         </div>
-                        <div id="fileList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;"></div>
+                        <div id="fileList"></div>
+                        <div class="file-warning">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>Note: You can upload Audio, Video and Text files. (Supported: JPG, PNG, MP4, PDF, DOCX, TXT, etc.)</span>
+                        </div>
                     </div>
                     <div class="form-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
                         <input type="checkbox" id="is_anonymous" name="is_anonymous" style="width: 24px; height: 24px; cursor: pointer; accent-color: #2D1B69;">
@@ -226,16 +304,6 @@ endforeach; ?>
             <div class="custom-modal-actions">
                 <button type="button" class="modal-btn-cancel" id="fileDeleteCancel">Cancel</button>
                 <button type="button" class="modal-btn-confirm" id="fileDeleteConfirm">Yes, Remove</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- File Type Alert Modal -->
-    <div id="fileTypeAlertModal" class="custom-modal-overlay">
-        <div class="custom-modal-box">
-            <h3 id="fileTypeAlertMessage" style="margin-bottom: 20px; color: #dc3545;">Invalid File Type</h3>
-            <div class="custom-modal-actions" style="justify-content: center;">
-                <button type="button" class="modal-btn-cancel" id="fileTypeAlertOk">OK</button>
             </div>
         </div>
     </div>
