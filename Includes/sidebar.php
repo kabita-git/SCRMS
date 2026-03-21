@@ -1,8 +1,6 @@
 <?php
-// Determine current page for highlighting
 $current_page = basename($_SERVER['PHP_SELF']);
 
-// Ensure we have a session and database connection to lookup user info
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -15,7 +13,6 @@ $first     = htmlspecialchars($_SESSION['first_name'] ?? '');
 $middle    = htmlspecialchars($_SESSION['middle_name'] ?? '');
 $last      = htmlspecialchars($_SESSION['last_name'] ?? '');
 
-// If the session doesn't yet have a role but we have an ID, fetch from DB
 if (!$role && $user_id) {
     $stmt = $conn->prepare('SELECT role, first_name, middle_name, last_name FROM users WHERE user_id = ?');
     if ($stmt) {
@@ -32,7 +29,6 @@ if (!$role && $user_id) {
     }
 }
 
-// Build a display name and escaping again just in case
 $full_name = trim("$first $middle $last");
 $full_name = htmlspecialchars($full_name);
 $display_role = htmlspecialchars(ucfirst($role ?? '')); ?>

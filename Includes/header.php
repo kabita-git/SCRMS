@@ -13,8 +13,31 @@
         </button>
         <h1 class="system-title">SCRMS</h1>
     </div>
-    <button class="logout-btn logout-trigger" id="logoutTrigger">Logout</button>
+    
+    <div class="header-right">
+        <div class="notification-wrapper">
+            <button class="notification-btn" id="notificationBtn" aria-label="Notifications">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                </svg>
+                <span class="notification-badge" id="notificationCount">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown">
+                <div class="dropdown-header">
+                    <h3>Notifications</h3>
+                    <button class="mark-all-read" id="markAllRead">Mark all as read</button>
+                </div>
+                <ul class="notification-list" id="notificationList">
+                    <li class="no-notifications">No new notifications</li>
+                </ul>
+            </div>
+        </div>
+
+        <button class="logout-btn logout-trigger" id="logoutTrigger">Logout</button>
+    </div>
 </header>
+<link rel="stylesheet" href="../Assets/Css/notifications.css">
+<script src="../Assets/JS/notifications.js" defer></script>
 
 <!-- Sidebar Overlay -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
