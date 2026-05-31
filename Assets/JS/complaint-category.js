@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ── Search + Pagination ─────────────────────────────────────────────────
+    // Search + Pagination 
     const pager = initTablePagination({
         tableBodyId    : 'tableBody',
         entriesSelectId: 'entriesSelect',

@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_token'])) {
     $payload = json_decode($response, true);
 
     if ($payload && isset($payload['email'])) {
-        // Verify audience (client ID)
+        // Verify client ID
         if ($payload['aud'] !== GOOGLE_CLIENT_ID) {
             echo json_encode(['success' => false, 'message' => 'Invalid audience']);
             exit;

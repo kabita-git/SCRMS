@@ -51,7 +51,6 @@ if ($res_comp && $row = $res_comp->fetch_assoc()) {
 
 // Fetch Solved Complaints
 $solved_complaints = 0;
-// Note: using complaint_statuses as specified in the schema
 $solved_where = " WHERE s.status_label = 'Solved'";
 if (in_array($role, $departmental_roles)) {
     $solved_where .= " AND c.assigned_role = '$role'";
@@ -250,7 +249,7 @@ if (in_array($role, $departmental_roles) && $assigned_category !== null) {
                         </button>
                     </div>
 
-                    <!-- In Progress Card (New) -->
+                    <!-- In Progress Card -->
                     <div class="stat-card stat-card-purple">
                         <div class="stat-icon">
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -270,7 +269,7 @@ if (in_array($role, $departmental_roles) && $assigned_category !== null) {
                         </button>
                     </div>
 
-                    <!-- Unresolved Card (New) -->
+                    <!-- Unresolved Card -->
                     <div class="stat-card stat-card-red">
                         <div class="stat-icon">
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -292,7 +291,7 @@ if (in_array($role, $departmental_roles) && $assigned_category !== null) {
                         </button>
                     </div>
 
-                    <!-- Recent (Last 7 Days) Card (New) -->
+                    <!-- Recent (Last 7 Days) Card -->
                     <div class="stat-card stat-card-indigo">
                         <div class="stat-icon">
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -315,7 +314,7 @@ if (in_array($role, $departmental_roles) && $assigned_category !== null) {
                         </button>
                     </div>
                 <?php else: ?>
-                    <!-- Total Users Card for Admin/UpperBody -->
+                    <!-- Total Users Card for Admin -->
                     <div class="stat-card stat-card-indigo">
                         <div class="stat-icon">
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -336,7 +335,7 @@ if (in_array($role, $departmental_roles) && $assigned_category !== null) {
                         </button>
                     </div>
 
-                    <!-- Solved Complaints Card for Admin/UpperBody -->
+                    <!-- Solved Complaints Card for Admin -->
                     <div class="stat-card stat-card-orange">
                         <div class="stat-icon">
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
