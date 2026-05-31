@@ -23,6 +23,7 @@ class MailManager {
             // Support both 465 (SSL) and 587 (TLS)
             $mail->SMTPSecure = (MAIL_PORT == 465) ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = MAIL_PORT;
+            $mail->Timeout    = 1.5; // Set SMTP connection timeout to 1.5 seconds
 
             $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
             $mail->addAddress($to);
@@ -55,6 +56,33 @@ class MailManager {
         }
     }
 
+    // Send a general notification email asynchronously using a background process
+    public static function sendAsync($to, $subject, $message) {
+        $payload = [
+            'to' => $to,
+            'subject' => $subject,
+            'message' => $message
+        ];
+
+        $dir = __DIR__ . '/temp_mail_queue';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        $file = $dir . '/mail_job_' . microtime(true) . '_' . uniqid() . '.json';
+        file_put_contents($file, json_encode($payload));
+
+        $backgroundScript = __DIR__ . '/background-mailer.php';
+
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $cmd = "start /B " . PHP_BINARY . " " . escapeshellarg($backgroundScript) . " " . escapeshellarg($file) . " > NUL 2> NUL";
+            pclose(popen($cmd, "r"));
+        } else {
+            exec(PHP_BINARY . " " . escapeshellarg($backgroundScript) . " " . escapeshellarg($file) . " > /dev/null 2>&1 &");
+        }
+        return true;
+    }
+
     // Notify user about a status change
     public static function notifyStatusChange($email, $complaintTitle, $statusLabel, $message = '') {
         $subject = "Update on your complaint: $complaintTitle";
@@ -65,7 +93,7 @@ class MailManager {
             " . (!empty($message) ? "<p><strong>Remark from Admin:</strong> $message</p>" : "") . "
             <p>You can log in to your dashboard to see more details.</p>
         ";
-        return self::send($email, $subject, $body);
+        return self::sendAsync($email, $subject, $body);
     }
 
     // Notify Admin about a new complaint
@@ -77,6 +105,6 @@ class MailManager {
             <p><strong>Title:</strong> $complaintTitle</p>
             <p>Please log in to the admin panel to review and address this complaint.</p>
         ";
-        return self::send($email, $subject, $body);
+        return self::sendAsync($email, $subject, $body);
     }
 }

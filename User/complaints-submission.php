@@ -162,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p><strong>Category:</strong> $cat_label</p>
                 <p>Wait for an admin to review it. You will receive an email for every update.</p>
              ";
-             MailManager::send($user_email, $user_subject, $user_body);
+             MailManager::sendAsync($user_email, $user_subject, $user_body);
         }
         // --- End Notification Logic ---
 
